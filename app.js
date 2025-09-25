@@ -172,14 +172,14 @@ async function buildChemicalData(cidNumber, topSynonyms, casNumber, chemicalName
     console.log(`Chemical Data for ${chemicalData.name}:`, chemicalData)
 }
 
-// const casNumbers = [
-//     '90-15-3',
-//     '150-78-7',
-//     '123-91-1',
-//     '124-09-4',
-//     '109-65-9',
-//     '71-36-3',
-// ]
+const casNumbers = [
+    '90-15-3',
+    '150-78-7',
+    '123-91-1',
+    '124-09-4',
+    '109-65-9',
+    '71-36-3',
+]
 
 async function processAll(casNumbers) {
     for (let i = 0; i <casNumbers.length; i++) {
