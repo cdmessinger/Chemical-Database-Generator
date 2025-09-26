@@ -10,17 +10,17 @@ async function run(casList) {
         const currentCAS = casList[i];
         try{
             console.log(`Request ${i}, ${currentCAS}`)
-            console.log(`Fetching PubChem data for ${currentCAS}...`)
-            const rawData = await fetchFromPubChem(currentCAS);
-            if (!rawData) {
+            console.log(`Fetching PubChem data for ${currentCAS}...`);
+            const apiRawData = await fetchFromPubChem(currentCAS);
+            if (!apiRawData) {
                 console.warn(`⚠️ Skipping ${currentCAS} — no data returned.`);
                 continue;
             }
             else {
-                console.log('Data retrieved from API', rawData);
+                console.log('Data retrieved from API', apiRawData);
             }
-            console.log(`Parsing data for ${currentCAS}...`)
-            const parsedData = parsePubChemData(rawData);
+            console.log(`Parsing data for ${currentCAS}...`);
+            const parsedData = parsePubChemData(apiRawData);
             console.log(`Parsed data for ${currentCAS}`, parsedData);
         }
         catch (err) {

@@ -1,8 +1,8 @@
-export async function fetchFromPubChem(casNumber) {
+export async function fetchFromPubChem(searchQuery) {
 
     try {
-          //Step 1: use CAS number to get the CID for the chemical
-        const cidUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(casNumber)}/synonyms/JSON`;
+          //Step 1: search CAS/Chemical name to get the CID for the chemical
+        const cidUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(searchQuery)}/synonyms/JSON`;
         const cidResponse = await fetch(cidUrl);
 
         if (!cidResponse.ok) {
@@ -12,7 +12,7 @@ export async function fetchFromPubChem(casNumber) {
         const cidData = await cidResponse.json();
         const info = cidData?.InformationList?.Information?.[0];
         if (!info.CID) {
-            throw new Error(`No CID number found for ${casNumber}`);
+            throw new Error(`No CID number found for ${searchQuery}`);
         }
 
         const cidNumber = info.CID //the number we use now to find the data we need
@@ -35,14 +35,14 @@ export async function fetchFromPubChem(casNumber) {
         const rawData = await dataResponse.json();
 
         return {
-            casNumber,
+            searchQuery,
             cid: cidNumber,
             chemicalName,
             synonyms: topSynonyms,
             rawData
         } 
     } catch(err) {
-        console.error(`Error fetching data for ${casNumber}:`, err.message);
+        console.error(`Error fetching data for ${searchQuery}:`, err.message);
         return null;
     }
 }
