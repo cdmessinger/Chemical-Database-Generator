@@ -25,6 +25,8 @@ async function run(casList) {
             const parsedData = parsePubChemData(apiRawData);
             console.log(`Parsed data for ${currentCAS}`, parsedData);
 
+            const sdsLinks = await scrapeFisherSDS(currentCAS)
+
         }
         catch (err) {
             console.error(`💥 Unexpected error processing ${currentCAS}:`, err);

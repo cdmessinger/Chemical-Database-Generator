@@ -4,27 +4,48 @@ export async function scrapeFisherSDS(casNumber) {
   const searchURL = `https://www.fishersci.com/us/en/catalog/search/sds?selectLang=EN&store=&msdsKeyword=${encodeURIComponent(casNumber)}`;
   console.log("🔍 Searching:", searchURL);
 
-  // step 1: Launch a headless browser
-  const browser = await puppeteer.launch({ headless: true });
+  const browser = await puppeteer.launch({ headless: false, slowMo: 50 });
   const page = await browser.newPage();
 
-  // step 2: Go to the search page and wait for network to be idle
-  await page.goto(searchURL, { waitUntil: "networkidle2", timeout: 30000 });
+  // ✅ Use 'networkidle' not 'networkidle2'
+  await page.goto(searchURL, { waitUntil: "domcontentloaded", timeout: 30000 });
 
-   // step 3: select all relavant links on the page
-const sdsLinks = await page.evaluate(() => {
-  return Array.from(document.querySelectorAll('a')) // turn NodeList into array
-    .map(a => a.href) // extract hrefs
-    .filter(href => href && href.toLowerCase().includes('partnumber')); // this is how fisher labels their sds links
-});
+  // ✅ Get first 5 SDS product links
+  const sdsLinks = await page.evaluate(() => {
+    return Array.from(document.querySelectorAll("a"))
+      .map(a => a.href)
+      .filter(href => href && href.toLowerCase().includes("partnumber"))
+      .slice(0, 1);
+  });
 
-  console.log('found links', sdsLinks);
+  // ✅ Pass 'page' and await this function
+  await findMostRecentSDS(sdsLinks, page);
 
-  await browser.close();
-
-  // return sdsLinks;
+  // await browser.close();
 }
 
-scrapeFisherSDS('90-15-3')
+async function findMostRecentSDS(sdsLinks, page) {
+  for (let i = 0; i < sdsLinks.length; i++) {
+    const url = sdsLinks[i];
+    console.log(`Visiting product page ${i + 1}: ${url}`);
 
+    // ✅ Visit each SDS page
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
 
+    // ✅ Grab all visible text and search for revision date
+    const revisionDate = await page.evaluate(() => {
+      const pageText = document.body.innerText;
+      const match = pageText.match(
+        /Revision Date[:\s]+([A-Za-z]+\s\d{1,2},?\s\d{4}|\d{4}-\d{2}-\d{2})/i
+      );
+      return match ? match[1] : null;
+    });
+
+    // ✅ Log result
+    if (revisionDate) {
+      console.log(`📅 Revision date found: ${revisionDate}`);
+    } else {
+      console.log("❌ No Revision Date Found for this entry");
+    }
+  }
+}
