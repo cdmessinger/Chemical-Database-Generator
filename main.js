@@ -1,5 +1,6 @@
 import { fetchFromPubChem } from './api_requestor.js';
 import { parsePubChemData } from './data_parser.js';
+import { scrapeFisherSDS } from './sds-scraper/scraper.js'
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -19,9 +20,11 @@ async function run(casList) {
             else {
                 console.log('Data retrieved from API', apiRawData);
             }
+            // Usage:
             console.log(`Parsing data for ${currentCAS}...`);
             const parsedData = parsePubChemData(apiRawData);
             console.log(`Parsed data for ${currentCAS}`, parsedData);
+
         }
         catch (err) {
             console.error(`💥 Unexpected error processing ${currentCAS}:`, err);
