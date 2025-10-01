@@ -28,21 +28,26 @@ export async function scrapeFisherSDS(casNumber) {
       return;
     }
 
-    for (let i=0; i<sdsLinks.length; i++) {
-      const currLink = sdsLinks[i];
-      console.log(i+1, currLink);
-      //call revision date check function here
-      //if revision date < set date && name/cas match, break loop
-      //if not, check next sds sheet
-      //save most recent sds in case none match and flag it
-    }
+
+
+            //ignore this for now while working on csv part, just return a link
+    // for (let i=0; i<sdsLinks.length; i++) {
+    //   const currLink = sdsLinks[i];
+    //   console.log(i+1, currLink);
+    //   //call revision date check function here
+    //   //if revision date < set date && name/cas match, break loop
+    //   //if not, check next sds sheet
+    //   //save most recent sds in case none match and flag it
+    // }
 
     await browser.close();
+
+    return sdsLinks;
 
     setTimeout(() => {
       console.log('timeout reached, exiting...')
       process.exit(0)
-    }, 30000);
+    }, 10000);
   }
 
 
