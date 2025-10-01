@@ -26,7 +26,6 @@ async function run(casList) {
             console.log(`Parsed data for ${currentCAS}`, parsedData);
 
             const sdsLinks = await scrapeFisherSDS(currentCAS)
-
         }
         catch (err) {
             console.error(`💥 Unexpected error processing ${currentCAS}:`, err);
@@ -38,8 +37,9 @@ async function run(casList) {
 
 
 const casList = [
-    '90-15-3',
-    // '150-78-7'
+    '90-15-3', //1-naphthol
+    // '67-64-1' //acetone
+    // '71-43-2' //benzene
 ]
 
 
