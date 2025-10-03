@@ -47,8 +47,8 @@ async function run(casList) {
 
 
 const casList = [
-    '90-15-3', //1-naphthol
-    // '67-64-1' //acetone
+    // '90-15-3', //1-naphthol
+    '67-64-1' //acetone
     // '71-43-2' //benzene
 ]
 

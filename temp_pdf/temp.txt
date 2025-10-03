@@ -1,0 +1,496 @@
+
+
+--- PAGE 1 ---
+
+= msds 179 — 100% + Bo % LS
+a a
+SE. ThermoFisher
+Co SCIENTIFIC
+FN SAFETY DATA SHEET
+Creation Date 28-Apr-2009 Revision Date 13-Oct-2023 Revision Number 9
+1
+1. Identification
+ODS Product Name Acetone
+Cat No. : A9-4; A9-20; A9-200; A11-1; A11-4; A11-20; A11-200; A11S-4; A13-20;
+A13-200; A16F-1GAL; A16P-1GAL; A16P-4; A16S-4; A16S-20; A18-1;
+A18-4; A18-20; A18-20LC; A18-200; A18-200LC; A18-500; A18CU1300;
+A18FB-19; A18FB-50; A18FB-115; A18FB-200; A18P-4; A18POP-19;
+2 A18POPB-50; A18RB-19; A18RB-50; A18RB-115; A18RB-200;
+A18RS-28; A18RS-50; A18RS-115; A18RS-200; A18S-4; A18SK-4;
+A18S8S-19; A18SS-28; A18SS-50; A18SS-115; A18SS-200; A19-1;
+— A19-4; A19RS-115; A19RS-200; A40-4; A928-4; A929-1; A929-4;
+A929-4LC; A929RS-19; A929RS-50; A929RS-200; A929SK-4;
+A929SS-28; A929SS-50; A929SS-115; A929SS-200; A946-4; A946-4L.C;
+A946FB-200; A946RB-19; A946RB-50; A946RB-115; A946RB-200;
+A949-1; A949-4; A949-4LC; A949CU-50; A949N-119; A949N-219;
+A949POP-19; A949RS-28; A949RS-50; A949RS-115; A949SK-1;
+A949SK-4; A949SS-19; A949SS-28; A949SS-50; A949SS-115;
+'A949SS-200; BP2403-1; BP2403-4; BP2403-20; BP2403-RS200;
+3 BP2404-1; BP2404-4; BP2404-SK1; BP2404-SK4; HC300-1GAL;
+§70091; 22050131; 22050295; XXA9ET200LI; NC2396838
+CAS No 67-64-1
+Synonyms 2-Propanone; Dimethyl ketone; (Certified ACS, HPLC, OPTIMA, Histological,
+Spectranalyzed, NFIFCC/EP, Pesticide, Electronic, GC Resolv, SAFE-COTE)
+ES o Recommended Use Laboratory chemicals. o
+
+
+--- PAGE 2 ---
+
+Et 27/9 — 100% + B® % La i
+= Hazard Statements =
+Highly flammable liquid and vapor
+Causes serious eye irritation
+May cause drowsiness or dizziness
+May cause damage to organs through prolonged or repeated exposure
+J H &
+1
+SE Precautionary Statements.
+Prevention
+= Wash face, hands and any exposed skin thoroughly after handling
+B= Do not breathe dust/fume/gas/mist/vapors/spray
+ODP Use only outdoors or in a well-ventilated area
+=e Keep away from heat/sparks/open flames/hot surfaces. - No smoking
+= Keep container tightly closed
+Em Ground/bond container and receiving equipment
+== Use explosion-proof electricaliventilating/lighting equipment
+= Use only non-sparking tools
+Take precautionary measures against static discharge
+2 Wear protective gloves/protective clothing/eye protection/face protection
+Keep cool
+Response
+Get medical attention/advice if you feel unwell
+em Inhalation
+IF INHALED: Remove victim to fresh air and keep at rest in a position comfortable for breathing
+Call a POISON CENTER or doctor/physician if you feel unwell
+Skin
+IF ON SKIN (or hair): Take off immediately all contaminated clothing. Rinse skin with water/shower
+Eyes
+IF IN EYES: Rinse cautiously with water for several minutes. Remove contact lenses, if present and easy to do. Continue rinsing
+If eye irritation persists: Get medical advice/attention
+Fire
+In case of fire: Use CO2, dry chemical, or foam for extinction
+3 Storage
+Store in a well-ventilated place. Keep container tightly closed
+Store locked up
+Disposal
+Te T——T— v Bava 970 v
+
+
+--- PAGE 3 ---
+
+= msds 37/9 — 100% + Bo % LS
+a Flash Point 20 °C [4 °F a
+Method - CC (closed cup)
+Autoignition Temperature 465 °C / 869 °F
+Explosion Limits
+Upper 12.8 vol %
+Lower 25vol %
+Oxidizing Properties Not oxidising
+Sensitivity to Mechanical Impact No information available
+i Sensitivity to Static Discharge No information available
+Specific Hazards Arising from the Chemical
+Flammable. Risk of ignition. Containers may explode when heated. Vapors may form explosive mixtures with air. Vapors may
+travel to source of ignition and flash back.
+Hazardous Combustion Products
+Dd Carbon monoxide (CO). Carbon dioxide (CO2). Formaldehyde. Methanol.
+Protective Equipment and Precautions for Firefighters
+Page 3/9
+2
+== Acetone Revision Date 13-Oct-2023
+= As in any fire, wear self-contained breathing apparatus pressure-demand, MSHA/NIOSH (approved or equivalent) and full
+protective gear.
+3
+NEPA
+Health Flammability Instability Physical hazards
+2 3 0 NA
+6. Accidental release measures
+———— Personal Precautions Use personal protective equipment as required. Ensure adequate ventilation. Remove all
+— v sources of ignition. Take precautionary measures against static discharges. v
+
+
+--- PAGE 4 ---
+
+ES 5 {s — 100% + B® | 2 La i
+od a —_— mm ee _ _ _- mm m_ a
+Page 4/9
+2
+Acetone Revision Date 13-Oct-2023
+EN 149. Use a NIOSH/MSHA or European Standard EN 149 approved respirator if
+exposure limits are exceeded or if iritation or other symptoms are experienced.
+Recommended Filter type: low boiling organic solvent. Type AX. Brown. conforming to EN371
+5 Hygiene Measures Handle in accordance with good industrial hygiene and safety practice.
+9. Physical and chemical properties |
+Physical State Liquid
+Appearance Colorless
+Odor sweet
+Odor Threshold 19.8 ppm
+—_— pH 7
+CET) Melting Point/Range 95 °C / -139 °F
+Boiling Point/Range 56 °C / 132.8 °F
+Flash Point 20 °C / 4 °F
+Method - CC (closed cup)
+Evaporation Rate 5.6 (Butyl Acetate = 1.0)
+Flammability (solid,gas) Not applicable
+4 Flammability or explosive limits
+Upper 12.8 vol %
+- Lower 25v0l%
+a Vapor Pressure 247 mbar @ 20°C
+— Vapor Density 20
+= Le Specific Gravity 0.790
+= = Solubility Soluble in water
+= Partition coefficient; n-octanoliwater No data available
+= = Autoignition Temperature 465 °C / 869 °F
+a Decomposition Temperature >4°C
+e——— Viscosity 032mPas @ 20°C
+= Molecular Formula C3 HBO
+Molecular Weight 58.08
+v VOC Content(%) 100 v
+
+
+--- PAGE 5 ---
+
+= msds 6/9 — 100% + Bo [Z3 & & i
+a a
+Sensitization No information available
+Carcinogenicity The table below indicates whether each agency has listed any ingredient as a carcinogen.
+[Component | CASNo | RC [| NTP [| ACGH [| OSHA [ Mexico |
+[Acetone | 67641 | Notlisted | Notlisted | MNotlisted | Notlisted |  Notlisted |
+3 Mutagenic Effects No information available
+Reproductive Effects No information available.
+Developmental Effects No information available.
+Teratogenicity No information available.
+[== STOT - single exposure Central nervous system (CNS)
+STOT - repeated exposure None known
+Aspiration hazard No information available
+Symptoms | effects,both acute and Symptoms of overexposure may be headache, dizziness, tiredness, nausea and vomiting:
+4 delayed May cause pulmonary edema
+Endocrine Disruptor Information No information available
+Other Adverse Effects The toxicological properties have not been fully investigated
+12. Ecological information
+Ecotoxicity |
+= — [Component | Freshwater Algae |  FreshwaterFish | Microtox | WaterFlea |
+Acetone. NOEC = 430 mg/l (algae; 96(Oncorhynchus mykiss: LC50| EC50 = 14500 mg/L/15 min | EC50 = 8800 mg/L/48h
+h) = 5540 mg/l 96h EC50 = 12700 mg/L/48h
+5 Alburnus alburnus: LC50 = EC50 = 12600 mg/L/48h
+11000 mg/l 96h
+Leuciscus dus: LC50 =
+_ 11300 mg/L/8h
+————— Salmo gairdneri: LC50 =
+= EE 6100 mg/L/24h
+—— Persistence and Degradability Persistence is unlikely based on information available.
+EE — Bioaccumulation/ Accumulation No information available.
+—_—
+CLE Mobility Wil likely be mobile in the environment due to its volatility.
+6 v -— v
+
+
+--- PAGE 6 ---
+
+= msds 779 — 100% + Bo [Z3 & & i
+mm a rr  [[  Actvednatve | Flags | a
+i = id ACTIVE 1
+Legend:
+TSCA US EPA (TSCA) - Toxic Substances Control Act, (40 CFR Part 710)
+X - Listed
+*'- Not Listed
+4 . : !
+TSCA - Per 40 CFR 751, Regulation of Certain Chemical Not applicable
+Substances & Mixtures, Under TSCA Section 6(h) (PBT)
+TSCA 12(b) - Notices of Export Not applicable
+International Inventories
+Canada (DSL/NDSL), Europe (EINECS/ELINCS/NLP), Philippines (PICCS), Japan (ENCS), Japan (ISHL), Australia (AICS), China (IECSC), Korea
+(KECL).
+— [Component  [ cAsNo | bs. | nos. [EiNEcs | pices | Encs | isi [ aics [iEcsc [ kecL |
+[Acetone | erea1 | x | - Joooeses] x | x | x | X | x [wesoser]
+5 KECL - NIER number or KE number (http://ncis. nier.go.kr/en/main.do)
+U.S. Federal Regulations
+SARA 313 Not applicable
+SARA 311/312 Hazard Categories ~~ See section 2 for more information
+| ————— CWA (Clean Water Act) Not applicable
+Page 7/9
+. |
+PV—1
+EE
+Acetone Revision Date 13-Oct-2023
+Clean Air Act Not applicable
+v v
+
+
+--- PAGE 7 ---
+
+= msds 9/9 — 100% + Bo % LS
+~ a ~
+Contains component(s) that meet a ‘definition’ of per & poly fluoroalkyl substance (PFAS)?
+Not applicable
+6
+—
+SS
+Acetone Revision Date 13-Oct-2023
+7
+Other International Regulations
+———— CAS No Seveso ll Directive | Seveso lll Directive | Rotterdam Basel Convention
+(2012/18/EC) - (2012118/EC) - | Convention (PIC) | (Hazardous Waste)
+Qualifying Quantities|Qualifying Quantities|
+for Major Accident | for Safety Report
+Notification Requirements
+=e
+8 16. Other information
+Prepared By Regulatory Affairs
+Thermo Fisher Scientific
+Ea Email: EMSDS RA@thermofisher.com
+mV Creation Date 28-Apr-2009
+Ee Revision Date 13-Oct-2023
+—— Print Date 13-Oct-2023
+Revision Summary This document has been updated to comply with the US OSHA HazCom 2012 Standard
+replacing the current legislation under 29 CFR 1910.1200 to align with the Globally
+Harmonized System of Classification and Labeling of Chemicals (GHS).
+- Disclaimer
+The information provided in this Safety Data Sheet is correct to the best of our knowledge, information and belief at the
+9 v Ce ea ey EEE Ee v
+
+
+--- PAGE 8 ---
+
+= msds 9/9 — 100% + Bo % LS
+a Harmonized System of Classification and Labeling of Chemicals (GH a
+A Disclaimer
+The information provided in this Safety Data Sheet is correct to the best of our knowledge, information and belief at the
+EE. date of its publication. The information given is designed only as a guidance for safe handling, use, processing, storage,
+transportation, disposal and release and is not to be considered a warranty or quality specification. The information
+relates only to the specific material designated and may not be valid for such material used in combination with any other
+6 materials or in any process, unless specified in the text
+= Nn
+Pe
+7
+E
+8
+Page 9/9
+v v
+
+
+--- PAGE 9 ---
+
+= msds 9/9 — 100% + Bo % LS
+a Harmonized System of Classification and Labeling of Chemicals (GH a
+A Disclaimer
+The information provided in this Safety Data Sheet is correct to the best of our knowledge, information and belief at the
+EE. date of its publication. The information given is designed only as a guidance for safe handling, use, processing, storage,
+transportation, disposal and release and is not to be considered a warranty or quality specification. The information
+relates only to the specific material designated and may not be valid for such material used in combination with any other
+6 materials or in any process, unless specified in the text
+= Nn
+Pe
+7
+E
+8
+Page 9/9
+v v
+
+
+--- PAGE 10 ---
+
+= msds 9/9 — 100% + Bo % LS
+a Harmonized System of Classification and Labeling of Chemicals (GH a
+A Disclaimer
+The information provided in this Safety Data Sheet is correct to the best of our knowledge, information and belief at the
+EE. date of its publication. The information given is designed only as a guidance for safe handling, use, processing, storage,
+transportation, disposal and release and is not to be considered a warranty or quality specification. The information
+relates only to the specific material designated and may not be valid for such material used in combination with any other
+6 materials or in any process, unless specified in the text
+= Nn
+Pe
+7
+E
+8
+Page 9/9
+v v
+
+
+--- PAGE 11 ---
+
+= msds 9/9 — 100% + Bo % LS
+a Harmonized System of Classification and Labeling of Chemicals (GH a
+A Disclaimer
+The information provided in this Safety Data Sheet is correct to the best of our knowledge, information and belief at the
+EE. date of its publication. The information given is designed only as a guidance for safe handling, use, processing, storage,
+transportation, disposal and release and is not to be considered a warranty or quality specification. The information
+relates only to the specific material designated and may not be valid for such material used in combination with any other
+6 materials or in any process, unless specified in the text
+= Nn
+Pe
+7
+E
+8
+Page 9/9
+v v
+
+
+--- PAGE 12 ---
+
+= msds 9/9 — 100% + Bo % LS
+a Harmonized System of Classification and Labeling of Chemicals (GH a
+A Disclaimer
+The information provided in this Safety Data Sheet is correct to the best of our knowledge, information and belief at the
+EE. date of its publication. The information given is designed only as a guidance for safe handling, use, processing, storage,
+transportation, disposal and release and is not to be considered a warranty or quality specification. The information
+relates only to the specific material designated and may not be valid for such material used in combination with any other
+6 materials or in any process, unless specified in the text
+= Nn
+Pe
+7
+E
+8
+Page 9/9
+v v
+
+
+--- PAGE 13 ---
+
+= msds 9/9 — 100% + Bo % LS
+a Harmonized System of Classification and Labeling of Chemicals (GH a
+A Disclaimer
+The information provided in this Safety Data Sheet is correct to the best of our knowledge, information and belief at the
+EE. date of its publication. The information given is designed only as a guidance for safe handling, use, processing, storage,
+transportation, disposal and release and is not to be considered a warranty or quality specification. The information
+relates only to the specific material designated and may not be valid for such material used in combination with any other
+6 materials or in any process, unless specified in the text
+= Nn
+Pe
+7
+E
+8
+Page 9/9
+v v
+
+
+--- PAGE 14 ---
+
+= msds 9/9 — 100% + Bo % LS
+a Harmonized System of Classification and Labeling of Chemicals (GH a
+A Disclaimer
+The information provided in this Safety Data Sheet is correct to the best of our knowledge, information and belief at the
+EE. date of its publication. The information given is designed only as a guidance for safe handling, use, processing, storage,
+transportation, disposal and release and is not to be considered a warranty or quality specification. The information
+relates only to the specific material designated and may not be valid for such material used in combination with any other
+6 materials or in any process, unless specified in the text
+= Nn
+Pe
+7
+E
+8
+Page 9/9
+v v
+
+
+--- PAGE 15 ---
+
+= msds 9/9 — 100% + Bo % LS
+a Harmonized System of Classification and Labeling of Chemicals (GH a
+A Disclaimer
+The information provided in this Safety Data Sheet is correct to the best of our knowledge, information and belief at the
+EE. date of its publication. The information given is designed only as a guidance for safe handling, use, processing, storage,
+transportation, disposal and release and is not to be considered a warranty or quality specification. The information
+relates only to the specific material designated and may not be valid for such material used in combination with any other
+6 materials or in any process, unless specified in the text
+= Nn
+Pe
+7
+E
+8
+Page 9/9
+v v
+
+
+--- PAGE 16 ---
+
+= msds 9/9 — 100% + Bo % LS
+a Harmonized System of Classification and Labeling of Chemicals (GH a
+A Disclaimer
+The information provided in this Safety Data Sheet is correct to the best of our knowledge, information and belief at the
+EE. date of its publication. The information given is designed only as a guidance for safe handling, use, processing, storage,
+transportation, disposal and release and is not to be considered a warranty or quality specification. The information
+relates only to the specific material designated and may not be valid for such material used in combination with any other
+6 materials or in any process, unless specified in the text
+= Nn
+Pe
+7
+E
+8
+Page 9/9
+v v
+
+
+--- PAGE 17 ---
+
+= msds 9/9 — 100% + Bo % LS
+a Harmonized System of Classification and Labeling of Chemicals (GH a
+A Disclaimer
+The information provided in this Safety Data Sheet is correct to the best of our knowledge, information and belief at the
+EE. date of its publication. The information given is designed only as a guidance for safe handling, use, processing, storage,
+transportation, disposal and release and is not to be considered a warranty or quality specification. The information
+relates only to the specific material designated and may not be valid for such material used in combination with any other
+6 materials or in any process, unless specified in the text
+= Nn
+Pe
+7
+E
+8
+Page 9/9
+v v
+
+
+--- PAGE 18 ---
+
+= msds 9/9 — 100% + Bo % LS
+a Harmonized System of Classification and Labeling of Chemicals (GH a
+A Disclaimer
+The information provided in this Safety Data Sheet is correct to the best of our knowledge, information and belief at the
+EE. date of its publication. The information given is designed only as a guidance for safe handling, use, processing, storage,
+transportation, disposal and release and is not to be considered a warranty or quality specification. The information
+relates only to the specific material designated and may not be valid for such material used in combination with any other
+6 materials or in any process, unless specified in the text
+= Nn
+Pe
+7
+E
+8
+Page 9/9
+v v
+
+
+--- PAGE 19 ---
+
+= msds 9/9 — 100% + Bo % LS
+a Harmonized System of Classification and Labeling of Chemicals (GH a
+A Disclaimer
+The information provided in this Safety Data Sheet is correct to the best of our knowledge, information and belief at the
+EE. date of its publication. The information given is designed only as a guidance for safe handling, use, processing, storage,
+transportation, disposal and release and is not to be considered a warranty or quality specification. The information
+relates only to the specific material designated and may not be valid for such material used in combination with any other
+6 materials or in any process, unless specified in the text
+= Nn
+Pe
+7
+E
+8
+Page 9/9
+v v
+
+
+--- PAGE 20 ---
+
+= msds 9/9 — 100% + Bo % LS
+a Harmonized System of Classification and Labeling of Chemicals (GH a
+A Disclaimer
+The information provided in this Safety Data Sheet is correct to the best of our knowledge, information and belief at the
+EE. date of its publication. The information given is designed only as a guidance for safe handling, use, processing, storage,
+transportation, disposal and release and is not to be considered a warranty or quality specification. The information
+relates only to the specific material designated and may not be valid for such material used in combination with any other
+6 materials or in any process, unless specified in the text
+= Nn
+Pe
+7
+E
+8
+Page 9/9
+v v
