@@ -1,104 +1,89 @@
 import puppeteer from "puppeteer";
 import fs from "fs";
 import path from "path";
-import { createWorker } from "tesseract.js";
+import * as pdfjsLibRaw from "pdfjs-dist/legacy/build/pdf.js";
+const pdfjsLib = pdfjsLibRaw.default || pdfjsLibRaw;
 
-export async function scrapeFisherSDS(casNumber) {
-  // 📁 File paths
-  const saveDir = "C:/Users/cd02m/OneDrive/Desktop/Chem_Database/Chemical-Database-Generator/temp_pdf";
-  if (!fs.existsSync(saveDir)) fs.mkdirSync(saveDir, { recursive: true });
+import fetch from 'node-fetch';
 
-  const textPath = path.join(saveDir, "temp.txt");
-  const screenshotDir = path.join(saveDir, "screenshots");
+export async function scrapeFisherSDS(casNumber, page, cookieString) {
 
-  // Clear old screenshots
-  if (fs.existsSync(screenshotDir)) {
-    fs.readdirSync(screenshotDir).forEach(f => fs.unlinkSync(path.join(screenshotDir, f)));
-  } else {
-    fs.mkdirSync(screenshotDir);
+  //search fisher website for sds sheets
+  const searchUrl = `https://www.fishersci.com/us/en/catalog/search/sds?selectLang=EN&store=&msdsKeyword=${encodeURIComponent(casNumber)}`;
+  console.log("searching:", searchUrl);
+
+  await page.goto(searchUrl, {waitUntil: "domcontentloaded", timeout: 30000 });
+
+  //grab the first 5 sds links on the page and puts them in an array
+  const sdsLinks = await page.evaluate(() => {
+    return Array.from(document.querySelectorAll('a'))
+    .map(a => a.href)
+    .filter(href => href && href.toLowerCase().includes('partnumber'))
+    .slice(0,1); //temp 1 for testing
+  })
+
+  //check if we got any sds links, tell us if not
+    if (!sdsLinks.length) {
+      console.log('no sds links found');
+      return;
+    }
+
+    for (let i=0; i<sdsLinks.length; i++) {
+      const currLink = sdsLinks[i];
+      console.log(i+1, currLink);
+
+
+      const pdftext = await pdfExtract(currLink, cookieString)
+      //call pdfExtract function
+    }
+
+
+    return sdsLinks;
   }
 
-  const searchURL = `https://www.fishersci.com/us/en/catalog/search/sds?selectLang=EN&msdsKeyword=${encodeURIComponent(
-    casNumber
-  )}`;
-  console.log("🔍 Searching SDS page:", searchURL);
+  async function pdfExtract(currLink, cookieString) {
+    try {
+    console.log(`Trying to get a pdf for ${currLink}`)
 
-  // 🧠 Launch browser
-  const browser = await puppeteer.launch({
-    headless: false,
-    defaultViewport: null,
-    args: ["--start-maximized"],
-  });
-  const page = await browser.newPage();
 
-  // 1️⃣ Navigate to SDS search page
-  await page.goto(searchURL, { waitUntil: "domcontentloaded", timeout: 30000 });
+    const headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Referer": "https://www.fishersci.com/",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Cookie": cookieString || "" // pass in fresh cookies if needed
+  };
 
-  // 2️⃣ Find the first SDS link
-  const sdsLinks = await page.evaluate(() =>
-    Array.from(document.querySelectorAll("a"))
-      .map(a => a.href)
-      .filter(href => href && href.toLowerCase().includes("partnumber"))
-      .slice(0, 1)
-  );
+    //save path to file
+    const saveDir = "C:/Users/cd02m/OneDrive/Desktop/Chem_Database/Chemical-Database-Generator/temp_pdf";
+    if (!fs.existsSync(saveDir)) fs.mkdirSync(saveDir, { recursive: true });
+    const pdfPath = `${saveDir}/temp.pdf`;
+    const textPath = `${saveDir}/temp.txt`; 
 
-  if (!sdsLinks.length) {
-    console.log("❌ No SDS links found for CAS:", casNumber);
-    await browser.close();
-    return;
+    const res = await fetch(currLink , { headers });
+    if (!res.ok) throw new Error(`Failed to fetch ${res.status}`);
+    const buffer = await res.buffer();
+
+    fs.writeFileSync(pdfPath, buffer);
+    console.log(`PDF saved to ${pdfPath}`)
+
+    console.log('Parsing SDS PDF...')
+    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
+    console.log( `Pdf loaded with ${pdf.numPages} pages`);
+
+    let text = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const currPage = await pdf.getPage(i);
+      const content = await currPage.getTextContent();
+      text += content.items.map(item => item.str).join(" ") + "\n";
+    }
+    console.log('first 300 characters:', text.slice(0,300))
+    
+    fs.writeFileSync(textPath, text, 'utf-8');
+    return text;
+
+    } catch (err) {
+      console.error('Error', err.message);
+    }
+    
   }
-
-  const productUrl = sdsLinks[0];
-  console.log("🔎 Opening SDS:", productUrl);
-  await page.goto(productUrl, { waitUntil: "networkidle0", timeout: 40000 });
-
-  console.log("⏳ Waiting for SDS to fully load...");
-  await new Promise(res => setTimeout(res, 8000));
-
-  // 3️⃣ Focus the viewer before starting screenshots
-  console.log("🖱️ Clicking into SDS viewer to focus...");
-  await page.mouse.click(800, 400);
-  await new Promise(res => setTimeout(res, 1500));
-
-  // 4️⃣ Screenshot + scroll loop
-  console.log("📸 Starting visual capture...");
-  const totalShots = 20; // number of screenshots to attempt
-  const scrollPause = 2000; // wait time between scrolls
-  const screenshots = [];
-
-  for (let i = 1; i <= totalShots; i++) {
-    const shotPath = path.join(screenshotDir, `page_${i}.png`);
-    await page.screenshot({ path: shotPath, fullPage: false });
-    console.log(`📸 Captured screenshot ${i}: ${shotPath}`);
-    screenshots.push(shotPath);
-
-    // Attempt both PageDown and mouse wheel scrolling
-    await page.keyboard.press("PageDown");
-    await page.mouse.wheel({ deltaY: 800 });
-    await new Promise(res => setTimeout(res, scrollPause));
-  }
-
-  console.log("✅ Screenshotting complete. Beginning OCR...");
-
-  // 5️⃣ OCR each screenshot
-  const worker = await createWorker("eng");
-  let combinedText = "";
-
-  for (let i = 0; i < screenshots.length; i++) {
-    console.log(`🔍 OCR processing screenshot ${i + 1}/${screenshots.length}...`);
-    const {
-      data: { text },
-    } = await worker.recognize(screenshots[i]);
-    combinedText += `\n\n--- PAGE ${i + 1} ---\n\n${text}`;
-  }
-
-  await worker.terminate();
-
-  // 6️⃣ Save combined OCR text
-  fs.writeFileSync(textPath, combinedText, "utf-8");
-  console.log(`✅ All OCR text saved to: ${textPath}`);
-
-  await browser.close();
-}
-
-
