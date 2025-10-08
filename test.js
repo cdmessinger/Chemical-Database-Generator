@@ -8,7 +8,7 @@ import { resourceLimits } from "worker_threads";
 
 //test file so I don't have to call the API 800000 times
 
-const searchedCAS = '75-09-2'
+const searchedCAS = '90-15-3'
 const textPath = "C:/Users/cd02m/OneDrive/Desktop/Chem_Database/Chemical-Database-Generator/temp_pdf/temp.txt";
 const cutoffDate = new Date('2020-01-01')
 
@@ -62,8 +62,20 @@ const cutoffDate = new Date('2020-01-01')
             sdsInformation.errorCode.push("Error: could not retrieve product name from SDS");
         }
 
+
+        //Remove page headers - Fisher has page breaks with name/revision date headers, we want to filter out all of these to not get parsing issues.
+        
+            const escapeRegex = str => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape any special regex characters in the product name and revision date
+
+            const cleanedText = text
+            .replace(new RegExp(escapeRegex(sdsInformation.productName), 'gi'), '')
+            .replace(/Revision Date/gi, '')
+            .replace(new RegExp(escapeRegex(sdsInformation.revisionDate), 'gi'), '');
+
+
+
         //grab CAS No
-        const casNumber = text.match(/CAS[\s\-]*No\.?[:\s]*([\d\s\-]+)/i);
+        const casNumber = cleanedText.match(/CAS[\s\-]*No\.?[:\s]*([\d\s\-]+)/i);
         if (casNumber && casNumber[1]) {
             sdsInformation.casNumber = casNumber[1].trim();
         }
@@ -75,7 +87,7 @@ const cutoffDate = new Date('2020-01-01')
         }
 
         //Grab Synonyms
-        const synonyms = text.match(/Synonyms[:\s]*([\s\S]*?)(?=Recommended)/i); //stops at "recommended" which is next section
+        const synonyms = cleanedText.match(/Synonyms[:\s]*([\s\S]*?)(?=Recommended)/i); //stops at "recommended" which is next section
         if (synonyms && synonyms[1]) {
             sdsInformation.synonyms = synonyms[1].trim();
         }
@@ -86,7 +98,7 @@ const cutoffDate = new Date('2020-01-01')
         }
 
         //Grab Signal Word
-        const signalWord = text.match(/Signal Word[:\s]*([\s\S]*?)(?=Hazard)/i);
+        const signalWord = cleanedText.match(/Signal Word[:\s]*([\s\S]*?)(?=Hazard)/i);
         if (signalWord && signalWord[1]) {
             sdsInformation.signalWord = signalWord[1].trim();
         }
@@ -97,21 +109,28 @@ const cutoffDate = new Date('2020-01-01')
         }
 
         //Grab Hazard Statements and separate them for csv exporter later
-        const unfilteredHazards = text.match(/Hazard Statements[:\s]*([\s\S]*?)(?=Precautionary|$)/i);
+        const unfilteredHazards = cleanedText.match(/Hazard Statements[:\s]*([\s\S]*?)(?=Precautionary|$)/i);
+
         if (unfilteredHazards && unfilteredHazards[1]) {
             const hazardBlock = unfilteredHazards[1].trim();
-            const hazardArray = hazardBlock.split(/(?=\b(?:Causes|May|H\d{3})\b)/);
-            const formattedHazards = hazardArray.map(h => h.trim()).join('|||SEP|||')
-            sdsInformation.hazardStatements = formattedHazards
-        }
-        else {
+
+            // 🧪 Only capture hazard statements that *start* with Causes, May, Harmful, H###
+            const hazardArray = hazardBlock.match(/\b(?:Causes|May|Harmful|H\d{3})[\s\S]*?(?=\b(?:Causes|May|Harmful|H\d{3})\b|$)/gi) || [];
+
+            const formattedHazards = hazardArray.map(h => h.trim()).join('|||SEP|||'); //this allows us to parse it later for csv easier
+
+            sdsInformation.hazardStatements = formattedHazards.length > 0
+                ? formattedHazards
+                : 'No valid hazard statements found';
+        } else {
             sdsInformation.hazardStatements = 'Hazard Statements not found';
             validateInformation = false;
             sdsInformation.errorCode.push("Error: could not retrieve Hazard Statements from SDS");
         }
+
         
         //Grab Class
-        const transportSection = text.match(/(?:14\.\s*)?Transport\s+Information[:\s]*([\s\S]*?)(?=(?:15\.\s*)?Regulatory\s+Information)/i);
+        const transportSection = cleanedText.match(/(?:14\.\s*)?Transport\s+Information[:\s]*([\s\S]*?)(?=(?:15\.\s*)?Regulatory\s+Information)/i);
         if (transportSection && transportSection[1]) {
             const dotClass = transportSection[1].match(/Class[:\s]*([\s\S]*?)(?=Packing)/i);
             if (dotClass && dotClass[1]) {
@@ -142,6 +161,7 @@ const cutoffDate = new Date('2020-01-01')
 
         if (normalizeCAS(searchedCAS) !== normalizeCAS(sdsInformation.casNumber)) {
             statusCode = 'red';
+            sdsInformation.errorCode.push('CAS numbers do not match - verify SDS sheet')
         } else if (validateInformation === false) {
             statusCode = 'orange';
         }

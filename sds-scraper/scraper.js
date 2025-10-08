@@ -71,19 +71,39 @@ export async function scrapeFisherSDS(casNumber, page, cookieString) {
     const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
     console.log( `Pdf loaded with ${pdf.numPages} pages`);
 
-    let text = '';
+    let rawText = '';
     for (let i = 1; i <= pdf.numPages; i++) {
       const currPage = await pdf.getPage(i);
       const content = await currPage.getTextContent();
-      text += content.items.map(item => item.str).join(" ") + "\n";
+      rawText += content.items.map(item => item.str).join(" ") + "\n";
     }
-    console.log('first 300 characters:', text.slice(0,300))
+    console.log('first 300 characters:', rawText.slice(0,300))
     
-    fs.writeFileSync(textPath, text, 'utf-8');
-    return text;
+    //filter text to remove page breaks - can cause weird parsing
+
+    const contactInfo = 'Company Thermo Fisher Scientific Chemicals, Inc. 30 Bond Street Ward Hill, MA 01835-8099 Tel: 800-343-0660 Fax: 800-322-4757 Emergency Telephone Number For information US call: 001-800-227-6701 / Europe call: +32 14 57 52 11 Emergency Number US: 001-201-796-7100 / Europe: +32 14 57 52 99 CHEMTREC Tel. No. US: 001-800-424-9300 / Europe: 001-703-527-3887'
+
+    const cleanText = rawText
+        .replace(/Page\s*\d+\s*(?:\/|of)\s*\d+/gi, '')  // Remove 'Page 1 of 8' or 'Page 1/8'
+        .replace(/_{3,}/g, '')                          // Remove long underscore lines
+        .replace(/^\s*\d+\s*$/gm, '')                   // Remove lines that are just numbers
+        .replace(/\f/g, '')                             // Remove form-feed page breaks
+        .replace(/\s{2,}/g, ' ')                 // Collapse extra spaces
+        .replace(new RegExp(contactInfo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), '') //removes contact info block that sometimes causes issues
+
+
+
+
+
+    fs.writeFileSync(textPath, cleanText, 'utf-8');
+    return cleanText;
 
     } catch (err) {
       console.error('Error', err.message);
     }
     
   }
+
+  // function pdfExtract(textPath) {
+
+  // }

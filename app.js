@@ -22,11 +22,13 @@ async function getCID(casNumber) {
 }
 
 async function getCAS(cidNumber) {
-    const url = `https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${cidNumber}/JSON/?heading=CAS`
+    const url = `https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/${cidNumber}/JSON/`
     const res = await fetch(url);
     const data = await res.json();
 
+    
     const name = data.Record.RecordTitle
+    console.log(name, data);
     const casSection = findSection(data.Record.Section, "CAS");
     const casInfo = casSection.Information;
 
@@ -173,11 +175,11 @@ async function buildChemicalData(cidNumber, topSynonyms, casNumber, chemicalName
 }
 
 const casNumbers = [
-    '90-15-3',
-    '150-78-7',
-    '123-91-1',
-    '124-09-4',
-    '109-65-9',
+    // '90-15-3',
+    // '150-78-7',
+    // '123-91-1',
+    // '124-09-4',
+    // '109-65-9',
     '71-36-3',
 ]
 
