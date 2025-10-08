@@ -64,13 +64,11 @@ async function run(casList) {
 
             // const sdsLinks = await scrapeFisherSDS(currentCAS, page, cookieString);
             
-            
-            // parsedData.sdsLinks = sdsLinks;
-            // console.log(parsedData);
 
-        //    allRecords.push(parsedData);
+
         chemicalData.errorStatements = errorStatements;
         console.log('Chemical data:', chemicalData);
+        allRecords.push(chemicalData);
         } catch (err) {
             console.error(`Unexpected error processing ${currentCAS}: ${err.message}`);
             errorStatements.push(`Unexpected error processing ${currentCAS}: ${err.message}`);
@@ -82,7 +80,7 @@ async function run(casList) {
 
     await closeBrowser(browser);
 
-    // exportToCSV(allRecords, 'chemical_database.csv')
+    exportToCSV(allRecords, 'chemical_database.csv')
 }
 
 async function openBrowser() {
