@@ -8,15 +8,50 @@ import { resourceLimits } from "worker_threads";
 
 //test file so I don't have to call the API 800000 times
 
-const searchedCAS = '90-15-3'
+const chemicalData = {
+  searchQuery: '75-09-2',
+  searchQueryViaParser: '75-09-2',
+  cidNumber: 6344,
+  chemicalName: 'DICHLOROMETHANE',
+  synonyms: [
+    'Methylene chloride',
+    'Methylene dichloride',
+    'Methane, dichloro-',
+    'Methylene bichloride',
+    'Methane dichloride'
+  ],
+  pubChemCasNumbers: [ '75-09-2', '1605-72-7' ],
+  pubChemMolecularFormula: 'CH2Cl2',
+  pubChemMolecularWeight: '84.93',
+  pubChemSignalWord: 'Warning',
+  pubChemPictograms: [ 'Health Hazard', 'Irritant' ],
+  pubChemHazardStatements: [
+    'H351: Suspected of causing cancer [Warning Carcinogenicity]',
+    'H302 (24.1%): Harmful if swallowed [Warning Acute toxicity, oral]',
+    'H315 (30.4%): Causes skin irritation [Warning Skin corrosion/irritation]',
+    'H319 (53.2%): Causes serious eye irritation [Warning Serious eye damage/eye irritation]',
+    'H336 (29.9%): May cause drowsiness or dizziness [Warning Specific target organ toxicity, single exposure; Narcotic effects]',
+    'H341 (22.9%): Suspected of causing genetic defects [Warning Germ cell mutagenicity]',
+    'H373 (12.7%): May causes damage to organs through prolonged or repeated exposure [Warning Specific target organ toxicity, repeated exposure]',        
+    'H370: Causes damage to organs [Danger Specific target organ toxicity, single exposure]',
+    'H372: Causes damage to organs through prolonged or repeated exposure [Danger Specific target organ toxicity, repeated exposure]',
+    'H402: Harmful to aquatic life [Hazardous to the aquatic environment, acute hazard]',
+    'H332: Harmful if inhaled [Warning Acute toxicity, inhalation]',
+    'H350: May cause cancer [Danger Carcinogenicity]',
+    'H361: Suspected of damaging fertility or the unborn child [Warning Reproductive toxicity]',
+    'H412: Harmful to aquatic life with long lasting effects [Hazardous to the aquatic environment, long-term hazard]',
+    'H335: May cause respiratory irritation [Warning Specific target organ toxicity, single exposure; Respiratory tract irritation]'
+  ]
+}
+
 const textPath = "C:/Users/cd02m/OneDrive/Desktop/Chem_Database/Chemical-Database-Generator/temp_pdf/temp.txt";
-const cutoffDate = new Date('2020-01-01')
+const cutoffDate = new Date('2020-01-01');
 
 
-  function pdfExtract(textPath) {
+  function pdfExtract(chemicalData, textPath) {
     const text = fs.readFileSync(textPath, 'utf-8');
-
     const sdsInformation = { errorCode: [] };
+    const searchedCAS = chemicalData.searchQuery;
     sdsInformation.searchedCAS = searchedCAS;
     let validateInformation = true;
     let normalizedDate = null;
@@ -172,7 +207,8 @@ const cutoffDate = new Date('2020-01-01')
         }
 
         
-        sdsInformation.statusCode = statusCode;        
+        sdsInformation.statusCode = statusCode;  
+
     } catch (err) {
         console.error("Error parsing SDS data:", err.message)
         console.log('partial SDS info:', sdsInformation);
@@ -181,6 +217,101 @@ const cutoffDate = new Date('2020-01-01')
     return sdsInformation;
   }
 
-  const result = pdfExtract(textPath);
+  const result = pdfExtract(chemicalData, textPath);
 
   console.log(result);
+
+function validateData(chemicalData, sdsData) {
+    let confidenceScore = 100;
+    const confidenceScoreInfo = [];
+
+    //check CAS Numbers
+    if (sdsData.casNumber !== chemicalData.searchQuery) {
+        console.log('CAS does not match searchQuery, checking PubChem numbers');
+
+        const matchInPubChem = chemicalData.pubChemCasNumbers.includes(sdsData.casNumber);
+
+        if (matchInPubChem) {
+            confidenceScore -= 20;
+            console.log(`SDS CAS (${sdsData.casNumber}) matches a PubChem CAS number (${chemicalData.pubChemCasNumbers}) but not searchQuery(${chemicalData.searchQuery}), -20`, confidenceScore);
+            confidenceScoreInfo.push(`SDS CAS (${sdsData.casNumber}) matches a PubChem CAS number (${chemicalData.pubChemCasNumbers}) but not searchQuery(${chemicalData.searchQuery}), -20`)
+        } else {
+            confidenceScore -= 40;
+            console.log(`SDS CAS (${sdsData.casNumber}) does not match PubChem CAS numbers (${chemicalData.pubChemCasNumbers}) or searchQuery (${chemicalData.searchQuery}), -40`, confidenceScore);
+            confidenceScoreInfo.push(`SDS CAS (${sdsData.casNumber}) does not match PubChem CAS numbers (${chemicalData.pubChemCasNumbers}) or searchQuery (${chemicalData.searchQuery}), -40`)
+        }
+    }
+
+    //check Name (filtered)
+    const normalizedSDSName = normalizeChemicalName(sdsData.productName);
+    const normalizedPubChemName = normalizeChemicalName(chemicalData.chemicalName);
+
+    if (normalizedSDSName.includes(normalizedPubChemName) || normalizedPubChemName.includes(normalizedSDSName)) {
+        console.log(`Chemical names (normalized) loosely match, -0, SDS: ${normalizedSDSName}, PubChem: ${normalizedPubChemName}`, confidenceScore);
+    } else {
+        confidenceScore -= 5;
+        console.log(`Chemical names (normalized) do not match, -0, SDS: ${normalizedSDSName}, PubChem: ${normalizedPubChemName}, -5`, confidenceScore);
+        confidenceScoreInfo.push(`Chemical names (normalized) do not match, -0, SDS: ${normalizedSDSName}, PubChem: ${normalizedPubChemName}, -5`);
+    }
+
+    //check signal word
+    if (chemicalData.pubChemSignalWord.toLowerCase().trim() === sdsData.signalWord.toLowerCase().trim()) {
+        console.log(`Signal words match, SDS: ${sdsData.signalWord}, PubChem: ${chemicalData.pubChemSignalWord} -0`, confidenceScore);
+    } else {
+        chemicalData -= 5
+        console.log(`Signal words match, SDS: ${sdsData.signalWord}, PubChem: ${chemicalData.pubChemSignalWord} -5`);
+    }
+
+    //check molecular formula (filtered)
+    const normalizedSDSFormula = normalizeMolecularFormula(sdsData.molecularFormula);
+    const normalizedPubChemFormula = normalizeMolecularFormula(chemicalData.pubChemMolecularFormula);
+
+    if (normalizedSDSFormula === normalizedPubChemFormula) {
+        console.log(`SDS Formula (normalized: ${normalizedSDSFormula}) matches Pubchem Formula (normalized: ${normalizedPubChemFormula}, -0`, confidenceScore);
+    } else {
+        confidenceScore -=10;
+        console.log(`SDS Formula (normalized: ${normalizedSDSFormula}) DOES NOT match Pubchem Formula (normalized: ${normalizedPubChemFormula}, -10`, confidenceScore);
+        confidenceScoreInfo.push(`SDS Formula (normalized: ${normalizedSDSFormula}) DOES NOT match Pubchem Formula (normalized: ${normalizedPubChemFormula}, -10`);
+    }
+
+
+    //check molecular weight
+    const sdsMW = Number(sdsData.molecularWeight);
+    const pubchemMW = Number(chemicalData.pubChemMolecularWeight);
+
+    if (!isNaN(pubchemMW) && !isNaN(sdsMW)) {
+        if (sdsMW >= pubchemMW-1 && sdsMW <= pubChemMW+1) {
+            console.log(`Molecular weight within +/- 1 g/mol, SDS: ${sdsMw}, PubChem: ${pubchemMW} -0`, confidenceScore);
+        } else {
+            confidenceScore -= 20;
+            console.log(`Molecular weight NOT within +/- 1 g/mol, SDS: ${sdsMw}, PubChem: ${pubchemMW} -20`, confidenceScore);
+            confidenceScoreInfo.push(`Molecular weight NOT within +/- 1 g/mol, SDS: ${sdsMw}, PubChem: ${pubchemMW} -20`)
+        }
+    }
+
+    //need to get MW and formula from sds still
+    //need to write confidence scoring pass/review/fail etc + logic to save highest confidence score & check a diff sds if under a 70
+    //need to remove old status code logic
+    //test scoring
+    //integrate it into big code (maybe refactor cleaner)
+}
+
+
+function normalizeChemicalName(name) {
+    if (!name) return '';
+
+    return name
+        .toLowerCase()                       // lowercase everything
+        .replace(/[^a-z0-9]/gi, ' ')          // remove all non-alphanumeric characters
+        .replace(/\s+/g, ' ')                 // collapse multiple spaces into one
+        .trim();                              // trim leading and trailing spaces
+}
+
+function normalizeMolecularFormula(formula) {
+    if (!formula) return '';
+
+    return formula
+        .toUpperCase()       // standardize casing (C not c)
+        .replace(/\s+/g, '')  // remove spaces
+        .trim();
+}

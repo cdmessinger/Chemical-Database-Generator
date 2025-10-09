@@ -62,12 +62,12 @@ async function run(casList) {
 
             
 
-            // const sdsLinks = await scrapeFisherSDS(currentCAS, page, cookieString);
+        const sdsData = await scrapeFisherSDS(chemicalData, page, cookieString);
             
 
 
         chemicalData.errorStatements = errorStatements;
-        console.log('Chemical data:', chemicalData);
+        // console.log('Chemical data:', chemicalData);
         allRecords.push(chemicalData);
         } catch (err) {
             console.error(`Unexpected error processing ${currentCAS}: ${err.message}`);
