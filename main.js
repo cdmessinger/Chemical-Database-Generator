@@ -63,7 +63,29 @@ async function run(casList) {
             
 
         const sdsData = await scrapeFisherSDS(chemicalData, page, cookieString);
-            
+        console.log('sds DATA LOOK HERE IDIOT', sdsData);
+
+        chemicalData.sdsRevisionDate = sdsData.revisionDate;
+        chemicalData.sdsProductName = sdsData.productName;
+        chemicalData.sdsCASNumber = sdsData.casNumber;
+        chemicalData.sdsSynonyms = sdsData.synonyms;
+        chemicalData.sdsSignalWord = sdsData.signalWord;
+        chemicalData.sdsHazardStatements = sdsData.hazardStatements;
+        chemicalData.sdsClass = sdsData.class;
+        chemicalData.sdsMolecularFormula = sdsData.molecularFormula;
+        chemicalData.sdsMolecularWeight = sdsData.molecularWeight;
+        chemicalData.sdsStatusCode = sdsData.statusCode;
+        chemicalData.sdsConfidenceScore = sdsData.confidenceScore;
+        chemicalData.sdsConfidenceInfo = sdsData.confidenceScoreInfo;
+        chemicalData.sdsLink = sdsData.sdsLink;
+
+        if (sdsData?.errorCode?.length) {
+            for (const error of parsedData.errorStatements) {
+                        errorStatements.push(error);
+            }
+        }
+
+        console.log('entire CHEMICAL BLOCK:', chemicalData)
 
 
         chemicalData.errorStatements = errorStatements;
