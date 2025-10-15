@@ -1,23 +1,26 @@
 import { fetchFromPubChem } from './api_requestor.js';
 import { parsePubChemData } from './data_parser.js';
 import { scrapeFisherSDS } from './sds-scraper/scraper.js';
-import { exportToCSV } from './exportToCSV.js';
+import { exportToExcel } from './exportToExcel.js';
+import { importExcel } from './excel_importer.js';
 import puppeteer from 'puppeteer';
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function run(casList) {
-
+async function run() {
     const allRecords = [];
+    const importFilePath = './test_import.xlsx';
+
+    const chemicalList =  await importExcel(importFilePath);
 
     //start the websession
     const { browser, page, cookieString } = await openBrowser();
     
 
-    for (let i = 0; i < casList.length; i++) {
-        const currentCAS = casList[i];
+    for (let i = 0; i < chemicalList.length; i++) {
+        const currentCAS = chemicalList[i].casNumber;
         const chemicalData = {};
         chemicalData.searchQuery = currentCAS;
         const errorStatements = [];
@@ -80,7 +83,7 @@ async function run(casList) {
         chemicalData.sdsLink = sdsData.sdsLink;
 
         if (sdsData?.errorCode?.length) {
-            for (const error of parsedData.errorStatements) {
+            for (const error of sdsData.errorCode) {
                         errorStatements.push(error);
             }
         }
@@ -96,13 +99,20 @@ async function run(casList) {
             errorStatements.push(`Unexpected error processing ${currentCAS}: ${err.message}`);
         }
         //wait 500ms before next API request, per PubChem docs (4 calls per second max). Each chemical needs 2 api calls.
-        await sleep(500);
+
+        const baseDelay = Math.floor(Math.random() * 5000) + 3000;  // 3–8 sec
+        const jitter = Math.floor(Math.random() * 300);             // 0–300 ms extra
+        const ms = baseDelay + jitter;
+
+        console.log(`⏳ Sleeping for ${ms} ms...`);
+        await sleep(ms);
+
     }
 
 
     await closeBrowser(browser);
 
-    exportToCSV(allRecords, 'chemical_database.csv')
+    exportToExcel(allRecords, 'chemical_database.xlsx')
 }
 
 async function openBrowser() {
@@ -126,14 +136,6 @@ async function closeBrowser(browser) {
 }
 
 
-const casList = [
-    // '90-15-3', //1-naphthol
-    // '67-64-1' //acetone
-    // '71-43-2' //benzene
-    // '7647-14-5' //NaCl
-    '75-09-2'  //dichloromethane
-    // '7758-98-7' // copper ii sulfate
-]
 
 
-run(casList);
+run();

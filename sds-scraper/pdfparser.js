@@ -17,31 +17,36 @@ export function pdfParse(chemicalData, textPath) {
 
 
     try {
-        //Grab revision date
+        // Grab revision date
         const revision = text.match(/Revision Date[:\s]*([\s\S]*?)(?=Revision Number|Product Name|$)/i);
+
         if (revision && revision[1]) {
             let rawDate = revision[1].trim();
-            sdsInformation.revisionDate = rawDate;
 
-            let formattedDate = rawDate;
+            // Strictly match only the date (e.g., "14-Nov-2014")
+            const dateMatch = rawDate.match(/(\d{2})-(\w{3})-(\d{4})/);
 
-            // Match formats like "05-Jan-2021"
-            const match = rawDate.match(/(\d{2})-(\w{3})-(\d{4})/);
-            if (match) {
-                const [, day, month, year] = match;
+            if (dateMatch) {
+                const [, day, month, year] = dateMatch;
                 const months = {
                     Jan: "01", Feb: "02", Mar: "03", Apr: "04", May: "05", Jun: "06",
                     Jul: "07", Aug: "08", Sep: "09", Oct: "10", Nov: "11", Dec: "12"
                 };
-                formattedDate = `${year}-${months[month]}-${day}`;
-            }
 
-            const parsedDate = new Date(formattedDate);
-            if (!isNaN(parsedDate.getTime())) {
-                sdsInformation.normalizedDate = formattedDate;
+                const formattedDate = `${year}-${months[month]}-${day}`;
+                const parsedDate = new Date(formattedDate);
+
+                if (!isNaN(parsedDate.getTime())) {
+                    sdsInformation.revisionDate = dateMatch[0]; // Original format
+                    sdsInformation.normalizedDate = formattedDate; // ISO format
+                } else {
+                    sdsInformation.revisionDate = `Invalid Date Format: ${rawDate}`;
+                    sdsInformation.errorCode.push('Could not check Revision Date Automatically');
+                    sdsInformation.normalizedDate = null;
+                }
             } else {
-                sdsInformation.revisionDate = `Invalid Date Format: ${rawDate}`;
-                sdsInformation.errorCode.push('Could not check Revision Date Automatically');
+                sdsInformation.revisionDate = `Invalid or missing date: ${rawDate}`;
+                sdsInformation.errorCode.push('Could not find valid Revision Date');
                 sdsInformation.normalizedDate = null;
             }
         } else {
@@ -49,7 +54,6 @@ export function pdfParse(chemicalData, textPath) {
             sdsInformation.errorCode.push("Error: could not retrieve revision date");
             sdsInformation.normalizedDate = null;
         }
-
 
 
         //Grab Product Name
@@ -114,10 +118,9 @@ export function pdfParse(chemicalData, textPath) {
             // 🧪 Only capture hazard statements that *start* with Causes, May, Harmful, H###
             const hazardArray = hazardBlock.match(/\b(?:Causes|May|Harmful|H\d{3})[\s\S]*?(?=\b(?:Causes|May|Harmful|H\d{3})\b|$)/gi) || [];
 
-            const formattedHazards = hazardArray.map(h => h.trim()).join('|||SEP|||'); //this allows us to parse it later for csv easier
 
-            sdsInformation.hazardStatements = formattedHazards.length > 0
-                ? formattedHazards
+            sdsInformation.hazardStatements = hazardArray.length > 0
+                ? hazardArray
                 : 'No valid hazard statements found';
         } else {
             sdsInformation.hazardStatements = 'Hazard Statements not found';
@@ -126,9 +129,7 @@ export function pdfParse(chemicalData, textPath) {
 
         
         //Grab Class
-        const transportSection = cleanedText.match(/(?:14\.\s*)?Transport\s+Information[:\s]*([\s\S]*?)(?=(?:15\.\s*)?Regulatory\s+Information)/i);
-        if (transportSection && transportSection[1]) {
-            const dotClass = transportSection[1].match(/Class[:\s]*([\s\S]*?)(?=Packing)/i);
+            const dotClass = cleanedText.match(/Hazard\s*Class[:\s]*([^\s]+)/i);
             if (dotClass && dotClass[1]) {
                 sdsInformation.class = dotClass[1].trim();
             }
@@ -136,13 +137,10 @@ export function pdfParse(chemicalData, textPath) {
                 sdsInformation.class = 'Hazard Class not found';
                 sdsInformation.errorCode.push("Error: could not retrieve Hazard Class from SDS");
             }
-        } 
-        else {
-            sdsInformation.class = 'Transportation Section not found: could not get Hazard Class';
-            sdsInformation.errorCode.push("Error: could not retrieve Hazard Class from SDS");
-        }
+
 
         //Grab molecular formula
+
         const molecularFormula = text.match(/Molecular Formula[:\s]*([\s\S]*?)(?=Molecular)/i); 
         if (molecularFormula && molecularFormula[1]) {
             sdsInformation.molecularFormula = molecularFormula[1].trim();
@@ -153,7 +151,7 @@ export function pdfParse(chemicalData, textPath) {
         }
 
         //Grab molecular Weight
-        const molecularWeight = text.match(/Molecular Weight[:\s]*([\s\S]*?)(?=10. Stability)/i); 
+        const molecularWeight = text.match(/Molecular\s*Weight[:\s]*([0-9.,]+\s*(?:g\/mol)?)/i); 
         if (molecularWeight && molecularWeight[1]) {
             sdsInformation.molecularWeight = molecularWeight[1].trim();
         }
@@ -274,6 +272,9 @@ function validateData(chemicalData, sdsData) {
         statusCode = '⚠️  Needs Review';
     } else {
         statusCode = '❌ Fail';
+    }
+    if (confidenceScore < 0) {
+        confidenceScore = 0;
     }
 
     sdsData.statusCode = statusCode;
