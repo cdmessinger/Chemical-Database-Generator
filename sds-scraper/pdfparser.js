@@ -141,14 +141,16 @@ export function pdfParse(chemicalData, textPath) {
 
         //Grab molecular formula
 
-        const molecularFormula = text.match(/Molecular Formula[:\s]*([\s\S]*?)(?=Molecular)/i); 
+        const molecularFormulaRegex = /Molecular Formula[:\s]*([A-Za-z0-9·\-\+\(\)\s]+?)(?=\r?\n|$|Molecular Weight|MolecularWeight|Component|CAS|Section|\d+\s*mg)/i;
+        const molecularFormula = text.match(molecularFormulaRegex);
+
         if (molecularFormula && molecularFormula[1]) {
-            sdsInformation.molecularFormula = molecularFormula[1].trim();
-        }
-        else {
+            sdsInformation.molecularFormula = molecularFormula[1].trim().replace(/\s+/g, '');
+        } else {
             sdsInformation.molecularFormula = 'Molecular Formula not found';
             sdsInformation.errorCode.push("Error: could not retrieve molecular formula from SDS");
         }
+
 
         //Grab molecular Weight
         const molecularWeight = text.match(/Molecular\s*Weight[:\s]*([0-9.,]+\s*(?:g\/mol)?)/i); 
@@ -190,10 +192,21 @@ function validateData(chemicalData, sdsData) {
             confidenceScore -= 20;
             console.log(`SDS CAS (${sdsData.casNumber}) matches a PubChem CAS number (${chemicalData.pubChemCasNumbers}) but not searchQuery(${chemicalData.searchQuery}), -20`, confidenceScore);
             confidenceScoreInfo.push(`SDS CAS (${sdsData.casNumber}) matches a PubChem CAS number (${chemicalData.pubChemCasNumbers}) but not searchQuery(${chemicalData.searchQuery}), -20`)
+            confidenceScoreInfo.push({
+            message: 'SDS CAS number matches a pubchem CAS number but not searched CAS',
+            sdsValue: sdsData.casNumber,
+            pubChemValue: chemicalData.searchQuery,
+            penalty: '-20'
+        });
         } else {
             confidenceScore -= 40;
             console.log(`SDS CAS (${sdsData.casNumber}) does not match PubChem CAS numbers (${chemicalData.pubChemCasNumbers}) or searchQuery (${chemicalData.searchQuery}), -40`, confidenceScore);
-            confidenceScoreInfo.push(`SDS CAS (${sdsData.casNumber}) does not match PubChem CAS numbers (${chemicalData.pubChemCasNumbers}) or searchQuery (${chemicalData.searchQuery}), -40`)
+            confidenceScoreInfo.push({
+                message: 'SDS CAS number does not match seached CAS OR a PubChem CAS number',
+                sdsValue: sdsData.casNumber,
+                pubChemValue: chemicalData.pubChemCasNumbers,
+                penalty: '-40'
+            });
         }
     }
 
@@ -206,8 +219,13 @@ function validateData(chemicalData, sdsData) {
     } else {
         confidenceScore -= 5;
         console.log(`Chemical names (normalized) do not match, -0, SDS: ${normalizedSDSName}, PubChem: ${normalizedPubChemName}, -5`, `Confidence Score: ${confidenceScore}`);
-        confidenceScoreInfo.push(`Chemical names (normalized) do not match, -0, SDS: ${normalizedSDSName}, PubChem: ${normalizedPubChemName}, -5`);
-    }
+        confidenceScoreInfo.push({
+            message: 'Chemical Names (normalized) do not match',
+            sdsValue: normalizedSDSName,
+            pubChemValue: normalizedPubChemName,
+            penalty: '-5'
+        });
+    };
 
     //check signal word
     if (chemicalData.pubChemSignalWord.toLowerCase().trim() === sdsData.signalWord.toLowerCase().trim()) {
@@ -215,7 +233,12 @@ function validateData(chemicalData, sdsData) {
     } else {
         confidenceScore -= 5;
         console.log(`Signal words do not match, SDS: ${sdsData.signalWord}, PubChem: ${chemicalData.pubChemSignalWord} -5`, `Confidence Score: ${confidenceScore}`);
-        confidenceScoreInfo.push(`Signal words do not match, SDS: ${sdsData.signalWord}, PubChem: ${chemicalData.pubChemSignalWord} -5`)
+        confidenceScoreInfo.push({
+            message: 'Signal words do not match',
+            sdsValue: sdsData.signalWord,
+            pubChemValue: chemicalData.pubChemSignalWord,
+            penalty: '-5'
+        });
     }
 
     //check molecular formula (filtered)
@@ -227,7 +250,12 @@ function validateData(chemicalData, sdsData) {
     } else {
         confidenceScore -=10;
         console.log(`SDS Formula (normalized: ${normalizedSDSFormula}) DOES NOT match Pubchem Formula (normalized: ${normalizedPubChemFormula}), -10`, `Confidence Score: ${confidenceScore}`);
-        confidenceScoreInfo.push(`SDS Formula (normalized: ${normalizedSDSFormula}) DOES NOT match Pubchem Formula (normalized: ${normalizedPubChemFormula}), -10`);
+        confidenceScoreInfo.push({
+            message: 'Molecular Formulas (normalized) do not match',
+            sdsValue: normalizedSDSFormula,
+            pubChemValue: normalizedPubChemFormula,
+            penalty: '-10'
+        });
     }
 
 
@@ -244,8 +272,13 @@ function validateData(chemicalData, sdsData) {
             console.log(`Molecular weight within +/- 1 g/mol, SDS: ${sdsMW}, PubChem: ${pubchemMW}`, `Confidence Score: ${confidenceScore}`);
         } else {
             confidenceScore -= 20;
-            confidenceScoreInfo.push(`Molecular weight NOT within +/- 1 g/mol, SDS: ${sdsMW}, PubChem: ${pubchemMW} (-20)`);
             console.log(`Molecular weight NOT within +/- 1 g/mol`, `Confidence Score: ${confidenceScore}`);
+            confidenceScoreInfo.push({
+                message: 'Molecular Weight NOT within +/- 1 g/mol',
+                sdsValue: sdsMW,
+                pubChemValue: pubchemMW,
+                penalty: '-20'
+            });
         }
     }
 
@@ -258,6 +291,12 @@ function validateData(chemicalData, sdsData) {
         confidenceScore -= 40;
         console.log(`SDS revision date (${normalizedDate.toISOString().split('T')[0]}) is BEFORE cutoff: (${cutoffDate.toISOString().split('T')[0]}), -40`, `Confidence Score: ${confidenceScore}`)
         confidenceScoreInfo.push(`SDS revision date (${normalizedDate.toISOString().split('T')[0]}) is BEFORE cutoff: (${cutoffDate.toISOString().split('T')[0]}), -40`);
+        confidenceScoreInfo.push({
+            message: 'SDS Revision Date is before Cutoff Date',
+            sdsValue: normalizedDate.toISOString().split('T')[0],
+            pubChemValue: cutoffDate.toISOString().split('T')[0],
+            penalty: '-40'
+        });
     }
 
 

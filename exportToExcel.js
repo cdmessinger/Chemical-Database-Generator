@@ -2,6 +2,81 @@ import { exec } from 'child_process';
 import path from 'path';
 import ExcelJS from 'exceljs';
 
+const headerMap = [
+    { key: 'knownProductName', label: 'Searched Chemical Name' },
+    { key: 'searchQuery', label: 'Searched CAS Number' },
+    { key: 'summary', label: 'Summary Report' },
+    { key: 'sdsStatusCode', label: 'SDS Status' },
+    { key: 'sdsConfidenceScore', label: 'SDS Confidence Score' },
+    { key: 'sdsConfidenceInfo', label: 'SDS Confidence Score Information' },
+    { key: 'sdsLink', label: 'SDS Link' },
+    { key: 'sdsRevisionDate', label: 'SDS Revision Date' }, 
+    { key: 'errorStatements', label: 'Errors' },
+
+
+    //blank column break
+    { key: 'null', label: '' },
+
+    { key: 'knownProductName', label: 'Searched Chemical Name'},
+    { key: 'sdsProductName', label: 'SDS Chemical Name'},
+    { key: 'pubChemProductName', label: 'PubChem Chemical Name'},
+
+    //blank column break
+    { key: 'null', label: '' },
+
+    { key: 'searchQuery', label: 'Searched CAS Number' },
+    { key: 'sdsCASNumber', label: 'SDS CAS Number' },
+    { key: 'pubChemCasNumbers', label: 'Pub Chem CAS Number(s)'},
+
+    //blank column break
+    { key: 'null', label: '' },
+
+    { key: 'sdsSynonyms', label: 'SDS Synonyms' },
+    { key: 'pubChemSynonyms', label: 'PubChem Synonyms' },
+
+    //blank column break
+    { key: 'null', label: '' },
+
+    { key: 'sdsMolecularFormula', label: 'SDS Molecular Formula' },
+    { key: 'pubChemMolecularFormula', label: 'PubChem Molecular Formula' },
+
+    //blank column break
+    { key: 'null', label: '' },
+
+    { key: 'sdsMolecularWeight', label: 'SDS Molecular Weight' },
+    { key: 'pubChemMolecularWeight', label: 'PubChem Molecular Weight' },
+
+    //blank column break
+    { key: 'null', label: '' },
+
+    { key: 'sdsSignalWord', label: 'SDS Signal Word' },
+    { key: 'pubChemSignalWord', label: 'PubChem Signal Word' },
+
+    //blank column break
+    { key: 'null', label: '' },
+
+    { key: 'sdsHazardStatements', label: 'SDS Hazard Statments' },
+    { key: 'pubChemHazardStatements', label: 'PubChem Hazard Statements' },
+
+    { key: 'pubChemPictograms', label: 'Pub Chem Pictograms' },
+    { key: 'pictogramCodes', label: 'Pictogram Codes (for export)' },
+
+    { key: 'sdsClass', label: 'SDS DOT Class (fix later)' },
+
+    //column break for misc info
+    { key: 'null', label: '' },
+
+    { key: 'pubChemCidNumber', label: 'PubChem CID Number' },
+    { key: 'knownSupplier', label: 'Supplier' },
+    { key: 'knownQuantity', label: 'Quantity' },
+    { key: 'knownQuantityUnits', label: 'Units' },
+    { key: 'knownLocation', label: 'Location' },
+    { key: 'knownCabinet', label: 'Cabinet' },
+    { key: 'knownReceivedDate', label: 'Received Date' },
+
+]
+
+
 export async function exportToExcel(parsedData, filepath = 'chemical_data.xlsx') {
     if (!parsedData || parsedData.length === 0) {
         console.warn('No data to export');
@@ -9,34 +84,72 @@ export async function exportToExcel(parsedData, filepath = 'chemical_data.xlsx')
     }
 
     const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet('Chemicals');
-
+    const allDataSheet = workbook.addWorksheet('Full Data'); //
+    const summarySheet = workbook.addWorksheet('Export'); //main sheet for uploading
+    
     // ✅ 1. Add headers first
-    const headers = Object.keys(parsedData[0]);
-    sheet.addRow(headers);
+    allDataSheet.addRow(headerMap.map(h => h.label));
 
     // ✅ 2. Add data rows
-parsedData.forEach(record => {
-    const rowData = headers.map(h => {
-        let value = record[h] ?? '';
+    parsedData.forEach(record => {
+        console.log(record)
+        const rowData = headerMap.map(h => {
+
+        if (h.key === 'null') {
+            return '';
+        }
+
+        let value = record[h.key] ?? '';
+
+        // Formating confidence info cells
+        if (h.key === 'sdsConfidenceInfo' && Array.isArray(value)) {
+            const richRuns = [];
+            value.forEach((err, i) => {
+                if (i > 0) {
+                richRuns.push({ text: '\n────────────────────────────────\n', font: { bold: false } });
+                }
+
+                if (typeof err === 'object') {
+                richRuns.push(
+                    { text: `${err.message}\n` },  // 🪄 newline after message
+                    { text: 'SDS: ' },
+                    { text: String(err.sdsValue), font: { bold: true } },
+                    { text: '\nPubChem: ' },
+                    { text: String(err.pubChemValue), font: { bold: true } },
+                    { text: '\nPenalty: ' },
+                    { text: ` ${err.penalty}`, font: { bold: true } }
+                );
+                } else {
+                    richRuns.push({ text: String(err) });
+                }
+            });
+                return { richText: richRuns };
+            }
+
+
+        // Default formatting
         if (Array.isArray(value)) {
-            value = value.join('\n'); // ✅ array → multiline string
+            value = value.join('\n');
         }
         return value;
     });
-    sheet.addRow(rowData);
+
+    const row = allDataSheet.addRow(rowData);
+
+    row.getCell(3).value = generateSummary(record);
 });
 
 
+
     // ✅ 3. Style after data is inserted
-    sheet.getRow(1).font = { bold: true };
-    sheet.columns.forEach(col => {
+    allDataSheet.getRow(1).font = { bold: true };
+    allDataSheet.columns.forEach(col => {
         col.width = 20;
     });
 
-const hazardColIndex = headers.indexOf('pubChemHazardStatements') + 1;
+const hazardColIndex = headerMap.findIndex(h => h.key === 'pubChemHazardStatements') + 1;
 
-sheet.columns.forEach((col, index) => {
+allDataSheet.columns.forEach((col, index) => {
     if (index + 1 === hazardColIndex) {
         // 🚫 No wrap for hazard statements
         col.alignment = { wrapText: false };
@@ -48,11 +161,14 @@ sheet.columns.forEach((col, index) => {
 
 
 
+
+
     // ✅ 4. Color code confidence score column if it exists
 // ✅ Color entire row based on confidence score
-const confidenceColIndex = headers.indexOf('sdsConfidenceScore') + 1;
+
+const confidenceColIndex = headerMap.findIndex(h => h.key === 'sdsConfidenceScore') + 1;
 if (confidenceColIndex > 0) {
-    sheet.eachRow((row, rowNumber) => {
+    allDataSheet.eachRow((row, rowNumber) => {
         if (rowNumber > 1) {
             const score = Number(row.getCell(confidenceColIndex).value);
             let color = null;
@@ -74,7 +190,7 @@ if (confidenceColIndex > 0) {
     });
 }
 
-sheet.eachRow(row => {
+allDataSheet.eachRow(row => {
     row.eachCell(cell => {
         cell.border = {
             top:    { style: 'thin', color: { argb: 'FF000000' } },
@@ -86,16 +202,43 @@ sheet.eachRow(row => {
 });
 
 
-sheet.columns.forEach((col, i) => {
-    let maxLength = 0;
-    col.eachCell({ includeEmpty: true }, cell => {
-        const cellLength = cell.value ? cell.value.toString().length : 0;
-        if (cellLength > maxLength) {
-            maxLength = cellLength;
-        }
-    });
-    col.width = Math.min(maxLength + 2, 100); // +2 for padding, max cap to avoid crazy widths
+allDataSheet.columns.forEach(col => {
+  let maxLength = 0;
+
+  col.eachCell({ includeEmpty: true }, cell => {
+    const cellValue = cell.value;
+
+    let text = '';
+    if (typeof cellValue === 'string') {
+      text = cellValue;
+    } else if (cellValue && cellValue.richText) {
+      text = cellValue.richText.map(rt => rt.text).join('');
+    } else if (cellValue != null) {
+      text = cellValue.toString();
+    }
+
+    maxLength = Math.max(maxLength, text.length);
+  });
+
+  col.width = Math.min(maxLength + 2, 100);
 });
+
+// 🪄 After you've added all rows and before saving the file
+allDataSheet.columns.forEach((col, index) => {
+  const header = headerMap[index];
+
+  if (header.key === 'null') {
+    col.eachCell({ includeEmpty: true }, cell => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: '000000' }  // black background
+      };
+      cell.font = { color: { argb: 'FFFFFF' } }; // white text (optional)
+    });
+  }
+});
+
 
 
 
@@ -106,3 +249,29 @@ sheet.columns.forEach((col, i) => {
     // ✅ 6. Auto-open file
     exec(`start "" "${path.resolve(filepath)}"`);
 }
+
+
+function generateSummary(record) {
+  const richRuns = [];
+
+  richRuns.push(
+        { text: 'Summary\n', font: { bold: true, underline: true } },
+        { text: 'Name Comparison\n', font: { bold: true } },
+        { text: 'Inventory: ' },
+        { text: String(record.knownProductName || 'N/A'), font: { bold: true } },
+        { text: '\nSDS: ' },
+        { text: String(record.sdsProductName || 'N/A'), font: { bold: true } },
+        { text: '\nPubChem: ' },
+        { text: String(record.pubChemName || 'N/A'), font: { bold: true } },
+        { text: '\n────────────────────\n' },
+        { text: 'CAS Comparison\n', font: { bold: true } },
+        { text: 'Inventory: ' },
+        { text: String(record.searchQuery || 'N/A'), font: { bold: true } },
+        { text: '\nSDS: ' },
+        { text: String(record.sdsCASNumber || 'N/A'), font: { bold: true } },
+        { text: '\nPubChem: ' },
+        { text: String(record.pubChemCASNumber || 'N/A'), font: { bold: true } }
+    );
+
+    return { richText: richRuns };
+};

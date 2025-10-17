@@ -22,12 +22,27 @@ async function run() {
     for (let i = 0; i < chemicalList.length; i++) {
         const currentCAS = chemicalList[i].casNumber;
         const chemicalData = {};
-        chemicalData.searchQuery = currentCAS;
         const errorStatements = [];
+
+        //add the data we have to the exportable object
+        chemicalData.summary = {}; //summary block to use in the export phase
+        chemicalData.searchQuery = currentCAS; //we use this to search pubchem/fisher
+        chemicalData.knownProductName = chemicalList[i].chemicalName;
+        chemicalData.knownSupplier = chemicalList[i].supplier;
+        chemicalData.knownQuantity = chemicalList[i].quantity;
+        chemicalData.knownUnits = chemicalList[i].units;
+        chemicalData.knownLocation = chemicalList[i].location;
+        chemicalData.knownCabinet = chemicalList[i].cabinet;
+        chemicalData.knownReceivedDate = chemicalList[i].dateReceived;
+
+
+
         try{
             console.log(`Request ${i}, ${currentCAS}`)
             console.log(`Fetching PubChem data for ${currentCAS}...`);
+
             const apiRawData = await fetchFromPubChem(currentCAS);
+            
             if (!apiRawData) {
                 console.warn(`Pubchem Error: ${currentCAS} — no data returned from API.`);
                 errorStatements.push(`Pubchem Error: ${currentCAS} — no data returned from API.`)
@@ -35,10 +50,10 @@ async function run() {
             }
             else {
                 console.log('Data retrieved from API', apiRawData);
-                chemicalData.searchQueryViaParser = apiRawData.searchQuery;
-                chemicalData.cidNumber = apiRawData.cid || 'Not Found';
-                chemicalData.chemicalName = apiRawData.chemicalName || 'Not Found';
-                chemicalData.synonyms = apiRawData.synonyms || [];
+                //set partial API data into our chemical block
+                chemicalData.pubChemCidNumber = apiRawData.cid || 'Not Found';
+                chemicalData.pubChemProductName = apiRawData.chemicalName || 'Not Found';
+                chemicalData.pubChemSynonyms = apiRawData.synonyms || [];
             }
             // Usage:
             console.log(`Parsing data for ${currentCAS}...`);
@@ -55,6 +70,7 @@ async function run() {
                 chemicalData.pubChemMolecularWeight = parsedData.molecularWeight || 'Not found';
                 chemicalData.pubChemSignalWord = parsedData.signalWord || 'Not Found';
                 chemicalData.pubChemPictograms = parsedData.pictograms || [];
+                chemicalData.pictogramCodes = 'temp'; //have to write this logic at some point lol
                 chemicalData.pubChemHazardStatements = parsedData.hazardStatements || [];
                 if (parsedData?.errorStatements?.length) {
                     for (const error of parsedData.errorStatements) {
@@ -66,8 +82,9 @@ async function run() {
             
 
         const sdsData = await scrapeFisherSDS(chemicalData, page, cookieString);
-        console.log('sds DATA LOOK HERE IDIOT', sdsData);
+        console.log(sdsData);
 
+        //adding all data to our chemical block
         chemicalData.sdsRevisionDate = sdsData.revisionDate;
         chemicalData.sdsProductName = sdsData.productName;
         chemicalData.sdsCASNumber = sdsData.casNumber;
