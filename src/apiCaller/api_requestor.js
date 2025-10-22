@@ -34,11 +34,12 @@ export async function fetchFromPubChem(searchQuery) {
         }
         const rawData = await dataResponse.json();
 
+        console.log('API DATA:', rawData);
+
         return {
-            searchQuery,
             cid: cidNumber,
-            chemicalName,
-            synonyms: topSynonyms,
+            pubChemProductName: chemicalName,
+            pubChemSynonyms: topSynonyms,
             rawData
         } 
     } catch(err) {

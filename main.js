@@ -1,135 +1,139 @@
-import { fetchFromPubChem } from './api_requestor.js';
-import { parsePubChemData } from './data_parser.js';
-import { scrapeFisherSDS } from './sds-scraper/scraper.js';
-import { exportToExcel } from './exportToExcel.js';
-import { importExcel } from './excel_importer.js';
-import puppeteer from 'puppeteer';
+import { 
+    puppeteer, 
+    fsp,
+    path,
+    sleep, 
+    importExcel, 
+    exportToExcel, 
+    scrapeFisherSDS, 
+    parsePubChemData, 
+    fetchFromPubChem,
+    buildChemicalData
+} from './src/utils/index.js';
 
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
+// const form = document.getElementById('form');
+// form.addEventListener('submit', async (e) => {
+//     e.preventDefault(); 
+//     await run();
+// })
+
 
 async function run() {
     const allRecords = [];
-    const importFilePath = './test_import.xlsx';
+    let lastData = {}; 
 
+    //Import our data:
+    const importFilePath = './src/importerExporter/test_import.xlsx';
     const chemicalList =  await importExcel(importFilePath);
+    if (!chemicalList) {
+        throw new Error('Error: could not import chemical Data')
+    } 
+    console.log(`Successfully imported ${chemicalList.length} chemical(s)`);
 
-    //start the websession
+    //start the websession in puppeteer
     const { browser, page, cookieString } = await openBrowser();
     
-
+    //Start running Chemical Searches
     for (let i = 0; i < chemicalList.length; i++) {
-        const currentCAS = chemicalList[i].casNumber;
-        const chemicalData = {};
+        const searchQuery = chemicalList[i].searchQuery; //CAS number, what we use to search everything
+        let chemicalData = {};
         const errorStatements = [];
 
-        //add the data we have to the exportable object
-        chemicalData.summary = {}; //summary block to use in the export phase
-        chemicalData.searchQuery = currentCAS; //we use this to search pubchem/fisher
-        chemicalData.knownProductName = chemicalList[i].chemicalName;
-        chemicalData.knownSupplier = chemicalList[i].supplier;
-        chemicalData.knownQuantity = chemicalList[i].quantity;
-        chemicalData.knownUnits = chemicalList[i].units;
-        chemicalData.knownLocation = chemicalList[i].location;
-        chemicalData.knownCabinet = chemicalList[i].cabinet;
-        chemicalData.knownReceivedDate = chemicalList[i].dateReceived;
-
-
+        //Add known information to our chemicalData object and return it.
+        chemicalData = buildChemicalData(chemicalData, chemicalList[i])
 
         try{
-            console.log(`Request ${i}, ${currentCAS}`)
-            console.log(`Fetching PubChem data for ${currentCAS}...`);
+            //check is last CAS is a duplicate, save memory and time
+            if (lastData.searchQuery && searchQuery === lastData.searchQuery) {
+                console.log('Current CAS matches the previous one, skipping lookup & copying data');
+                Object.keys(lastData).forEach((key) => {
+                    if (!chemicalData[key]) {
+                        chemicalData[key] = lastData[key];
+                    };
+                });
+                allRecords.push(chemicalData);
+                lastData = chemicalData;
+                continue;
+            } else {
+                //Normal functionality
+                console.log(`Request ${i}, ${searchQuery}`)
+                console.log(`Fetching PubChem data for ${searchQuery}...`);
 
-            const apiRawData = await fetchFromPubChem(currentCAS);
+                //Call PubChem API
+                const apiRawData = await fetchFromPubChem(searchQuery);
             
-            if (!apiRawData) {
-                console.warn(`Pubchem Error: ${currentCAS} — no data returned from API.`);
-                errorStatements.push(`Pubchem Error: ${currentCAS} — no data returned from API.`)
-                continue; //skipping Pubchem data, continuing to scrape fisher SDS
-            }
-            else {
-                console.log('Data retrieved from API', apiRawData);
-                //set partial API data into our chemical block
-                chemicalData.pubChemCidNumber = apiRawData.cid || 'Not Found';
-                chemicalData.pubChemProductName = apiRawData.chemicalName || 'Not Found';
-                chemicalData.pubChemSynonyms = apiRawData.synonyms || [];
-            }
-            // Usage:
-            console.log(`Parsing data for ${currentCAS}...`);
-            const parsedData = await parsePubChemData(apiRawData);
+                if (!apiRawData) {
+                    console.warn(`Pubchem Error: ${searchQuery} — no data returned from API.`);
+                    errorStatements.push(`Pubchem Error: ${searchQuery} — no data returned from API.`)
+                    continue; //skipping Pubchem data, continuing to scrape fisher SDS
+                }
+                else {
+                    console.log('Data retrieved from API', apiRawData);
+                    //Add 1st part of API Data to our chemicalData object
+                    chemicalData = buildChemicalData(chemicalData, apiRawData)
+                }
 
-            if (!parsedData) {
-                console.warn(`Pubchem Error: ${currentCAS} — could not parse API data.`)
-                errorStatements.push(`Pubchem Error: ${currentCAS} — could not parse API data.`)
-            }
-            else {
-                console.log(`Parsed data for ${currentCAS}`);
-                chemicalData.pubChemCasNumbers = parsedData.casNumbers || [];
-                chemicalData.pubChemMolecularFormula = parsedData.molecularFormula || 'Not found';
-                chemicalData.pubChemMolecularWeight = parsedData.molecularWeight || 'Not found';
-                chemicalData.pubChemSignalWord = parsedData.signalWord || 'Not Found';
-                chemicalData.pubChemPictograms = parsedData.pictograms || [];
-                chemicalData.pictogramCodes = 'temp'; //have to write this logic at some point lol
-                chemicalData.pubChemHazardStatements = parsedData.hazardStatements || [];
-                if (parsedData?.errorStatements?.length) {
-                    for (const error of parsedData.errorStatements) {
-                        errorStatements.push(error);
+                //Parse and extract API response from PubChem
+                console.log(`Parsing data for ${searchQuery}...`);
+                const parsedData = await parsePubChemData(apiRawData);
+
+                if (!parsedData) {
+                    console.warn(`Pubchem Error: ${searchQuery} — could not parse API data.`)
+                    errorStatements.push(`Pubchem Error: ${searchQuery} — could not parse API data.`)
+                }
+                else {
+                    console.log(`Parsed data for ${searchQuery}`);
+                    //Add our 2nd part of Pubchem API data to our object
+                    chemicalData = buildChemicalData(chemicalData, parsedData);
+
+                    //Add any error statements
+                    if (parsedData?.errorStatements?.length) {
+                        for (const error of parsedData.errorStatements) {
+                            errorStatements.push(error);
+                        }
                     }
                 }
+
+                //Scrape FisherSci website for SDS sheets and parse their data. SDS validation also occurs here.
+                const sdsData = await scrapeFisherSDS(chemicalData, page, cookieString);
+
+                //add SDS Data and Validation Data to our chemicalData object
+                chemicalData = buildChemicalData(chemicalData, sdsData);
+
+                if (sdsData?.errorCode?.length) {
+                    for (const error of sdsData.errorCode) {
+                                errorStatements.push(error);
+                    }
+                }
+
+                //Add error statements to chemicalData
+                chemicalData.errorStatements = errorStatements;
+                console.log('Finished Chemical Data Object:', chemicalData)
+
+                //add the data to our records
+                allRecords.push(chemicalData);
+                
+                //Call sleep function to limit API requests, unless on the last index.
+                if (i !== (chemicalList.length-1)) {
+                    await sleep(); 
+                }
+                lastData = chemicalData; //set lastData to check for duplicates and save time
             }
 
-            
-
-        const sdsData = await scrapeFisherSDS(chemicalData, page, cookieString);
-        console.log(sdsData);
-
-        //adding all data to our chemical block
-        chemicalData.sdsRevisionDate = sdsData.revisionDate;
-        chemicalData.sdsProductName = sdsData.productName;
-        chemicalData.sdsCASNumber = sdsData.casNumber;
-        chemicalData.sdsSynonyms = sdsData.synonyms;
-        chemicalData.sdsSignalWord = sdsData.signalWord;
-        chemicalData.sdsHazardStatements = sdsData.hazardStatements;
-        chemicalData.sdsClass = sdsData.class;
-        chemicalData.sdsMolecularFormula = sdsData.molecularFormula;
-        chemicalData.sdsMolecularWeight = sdsData.molecularWeight;
-        chemicalData.sdsStatusCode = sdsData.statusCode;
-        chemicalData.sdsConfidenceScore = sdsData.confidenceScore;
-        chemicalData.sdsConfidenceInfo = sdsData.confidenceScoreInfo;
-        chemicalData.sdsLink = sdsData.sdsLink;
-
-        if (sdsData?.errorCode?.length) {
-            for (const error of sdsData.errorCode) {
-                        errorStatements.push(error);
-            }
-        }
-
-        console.log('entire CHEMICAL BLOCK:', chemicalData)
-
-
-        chemicalData.errorStatements = errorStatements;
-        // console.log('Chemical data:', chemicalData);
-        allRecords.push(chemicalData);
         } catch (err) {
-            console.error(`Unexpected error processing ${currentCAS}: ${err.message}`);
-            errorStatements.push(`Unexpected error processing ${currentCAS}: ${err.message}`);
+            console.error(`Unexpected error processing ${searchQuery}: ${err.message}`);
+            errorStatements.push(`Unexpected error processing ${searchQuery}: ${err.message}`);
         }
-        //wait 500ms before next API request, per PubChem docs (4 calls per second max). Each chemical needs 2 api calls.
-
-        const baseDelay = Math.floor(Math.random() * 5000) + 3000;  // 3–8 sec
-        const jitter = Math.floor(Math.random() * 300);             // 0–300 ms extra
-        const ms = baseDelay + jitter;
-
-        console.log(`⏳ Sleeping for ${ms} ms...`);
-        await sleep(ms);
-
     }
 
-
+    //Close Puppeteer at the end of the session
     await closeBrowser(browser);
 
+    //Export our data to an excel file
     exportToExcel(allRecords, 'chemical_database.xlsx')
+    
+    //Delete temp files used in scraping
+    await cleanTempFiles();
 }
 
 async function openBrowser() {
@@ -137,7 +141,6 @@ async function openBrowser() {
     const page = await browser.newPage();
 
     //Go to fisher to generate fresh cookies
-
     await page.goto('https://www.fishersci.com', { waitUntil: 'domcontentloaded' })
 
     const cookies = await page.cookies();
@@ -152,7 +155,37 @@ async function closeBrowser(browser) {
     console.log('Browser Closed')
 }
 
+async function cleanTempFiles() {
+    const files = [
+        "./data/temp_pdf/temp.pdf",
+        "./data/temp_pdf/temp.txt"
+    ];
+
+    for (const file of files) {
+        try {
+            await fsp.access(file);
+            await fsp.unlink(file);
+            console.log(`Deleted ${file}`);
+        } catch(err) {
+            if (err.code === "ENOENT") {
+                console.log(`File not found, skipped: ${file}`)
+            } else {
+                console.error(`Failed to delete ${file}:`, err);
+            }
+        }
+    }
+}
 
 
 
-run();
+(async () => {
+  try {
+    await run();
+  } catch (err) {
+    console.error("💥 Uncaught error in run():", err);
+  }
+})();
+
+import fs from "fs";
+
+console.log(fs.existsSync("./data/temp_pdf/temp.txt"));

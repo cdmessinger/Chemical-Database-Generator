@@ -1,15 +1,18 @@
-import { exec } from 'child_process';
-import path from 'path';
-import ExcelJS from 'exceljs';
+import {
+    exec,
+    path, 
+    ExcelJS 
+} from '../utils/index.js';
 
 const headerMap = [
-    { key: 'knownProductName', label: 'Searched Chemical Name' },
+    { key: 'importedProductName', label: 'Searched Chemical Name' },
     { key: 'searchQuery', label: 'Searched CAS Number' },
     { key: 'summary', label: 'Summary Report' },
     { key: 'sdsStatusCode', label: 'SDS Status' },
     { key: 'sdsConfidenceScore', label: 'SDS Confidence Score' },
     { key: 'sdsConfidenceInfo', label: 'SDS Confidence Score Information' },
     { key: 'sdsLink', label: 'SDS Link' },
+    { key: 'sdsStorageNotes', label: 'Storage Notes' },
     { key: 'sdsRevisionDate', label: 'SDS Revision Date' }, 
     { key: 'errorStatements', label: 'Errors' },
 
@@ -17,7 +20,7 @@ const headerMap = [
     //blank column break
     { key: 'null', label: '' },
 
-    { key: 'knownProductName', label: 'Searched Chemical Name'},
+    { key: 'importedProductName', label: 'Searched Chemical Name'},
     { key: 'sdsProductName', label: 'SDS Chemical Name'},
     { key: 'pubChemProductName', label: 'PubChem Chemical Name'},
 
@@ -26,7 +29,7 @@ const headerMap = [
 
     { key: 'searchQuery', label: 'Searched CAS Number' },
     { key: 'sdsCASNumber', label: 'SDS CAS Number' },
-    { key: 'pubChemCasNumbers', label: 'Pub Chem CAS Number(s)'},
+    { key: 'pubChemCASNumbers', label: 'Pub Chem CAS Number(s)'},
 
     //blank column break
     { key: 'null', label: '' },
@@ -61,18 +64,18 @@ const headerMap = [
     { key: 'pubChemPictograms', label: 'Pub Chem Pictograms' },
     { key: 'pictogramCodes', label: 'Pictogram Codes (for export)' },
 
-    { key: 'sdsClass', label: 'SDS DOT Class (fix later)' },
+    { key: 'classification', label: 'Generated Classification (Class)' },
 
     //column break for misc info
     { key: 'null', label: '' },
 
     { key: 'pubChemCidNumber', label: 'PubChem CID Number' },
-    { key: 'knownSupplier', label: 'Supplier' },
-    { key: 'knownQuantity', label: 'Quantity' },
-    { key: 'knownQuantityUnits', label: 'Units' },
-    { key: 'knownLocation', label: 'Location' },
-    { key: 'knownCabinet', label: 'Cabinet' },
-    { key: 'knownReceivedDate', label: 'Received Date' },
+    { key: 'importedSupplier', label: 'Supplier' },
+    { key: 'importedQuantity', label: 'Quantity' },
+    { key: 'importedUnits', label: 'Units' },
+    { key: 'importedLocation', label: 'Location' },
+    { key: 'importedCabinet', label: 'Cabinet' },
+    { key: 'importedReceivedDate', label: 'Received Date' },
 
 ]
 
@@ -84,7 +87,7 @@ export async function exportToExcel(parsedData, filepath = 'chemical_data.xlsx')
     }
 
     const workbook = new ExcelJS.Workbook();
-    const allDataSheet = workbook.addWorksheet('Full Data'); //
+    const allDataSheet = workbook.addWorksheet('Full Data'); //ALL DATA
     const summarySheet = workbook.addWorksheet('Export'); //main sheet for uploading
     
     // ✅ 1. Add headers first

@@ -1,13 +1,14 @@
-import ExcelJS from 'exceljs';
+import { ExcelJS } from '../utils/index.js';
+
 
 const headerKey = {
-'Chemical Name': 'chemicalName',
-'Supplier': 'supplier',
-'CAS #': 'casNumber',
-'Quantity (Container Size)': 'quantity',
-'Location (Room)': 'location',
-'Cabinet': 'cabinet',
-'Date Received': 'dateReceived'
+'Chemical Name': 'importedProductName',
+'Supplier': 'importedSupplier',
+'CAS #': 'searchQuery',
+'Quantity (Container Size)': 'importedQuantity',
+'Location (Room)': 'importedLocation',
+'Cabinet': 'importedCabinet',
+'Date Received': 'importedReceivedDate'
 };
 
 
@@ -26,10 +27,10 @@ export async function importExcel(filepath) {
             const key = headerKey[header];
             let value = cell.value
             if (value) {
-                if (header === 'Quantity (Container Size)') {
+                if (header === 'Quantity (Container Size)' || header === 'Quantity') {
                     const separatedUnits = separateUnits(value);
-                    rowData.quantity = parseFloat(separatedUnits.quantity);
-                    rowData.units = separatedUnits.units;
+                    rowData.importedQuantity = parseFloat(separatedUnits.quantity);
+                    rowData.importedUnits = separatedUnits.units;
                 } else if (key) {
                     rowData[key] = value;
                 }
@@ -46,8 +47,8 @@ export async function importExcel(filepath) {
 
 
     // quick searching only 1 REMOVE AFTER TESTING
-    const tempVar = [ rows[0] ];
-    console.log(tempVar)
+    const tempVar = rows.slice(0,1);
+    console.log(tempVar);
     return tempVar;
 }
 

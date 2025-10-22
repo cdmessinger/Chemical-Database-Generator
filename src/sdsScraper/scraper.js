@@ -1,15 +1,13 @@
-import puppeteer from "puppeteer";
-import fs from "fs";
-import path from "path";
-import * as pdfjsLibRaw from "pdfjs-dist/legacy/build/pdf.js";
-const pdfjsLib = pdfjsLibRaw.default || pdfjsLibRaw;
-import { pdfParse } from './pdfparser.js';
-import fetch from 'node-fetch';
-import { text } from "stream/consumers";
-
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
+import {
+  puppeteer,
+  fs,
+  path,
+  pdfjsLib,
+  pdfParse,
+  fetch,
+  text,
+  sleep
+} from '../utils/index.js'
 
 export async function scrapeFisherSDS(chemicalData, page, cookieString) {
 
@@ -26,7 +24,7 @@ export async function scrapeFisherSDS(chemicalData, page, cookieString) {
     return Array.from(document.querySelectorAll('a'))
     .map(a => a.href)
     .filter(href => href && href.toLowerCase().includes('partnumber'))
-    .slice(0,4); //grab first 5 links on page
+    .slice(0,1); //grab first 5 links on page
   })
 
   //check if we got any sds links, tell us if not
@@ -43,27 +41,21 @@ export async function scrapeFisherSDS(chemicalData, page, cookieString) {
       const currLink = sdsLinks[i];
       console.log(i+1, currLink);
 
-      const baseDelay = Math.floor(Math.random() * 5000) + 3000;  // 3–8 sec
-      const jitter = Math.floor(Math.random() * 300);             // 0–300 ms extra
-      const ms = baseDelay + jitter;
-
-
       let textPath = await pdfExtract(currLink, cookieString);
       let sdsData = pdfParse(chemicalData, textPath);
 
-      if (!bestSDS.confidenceScore || sdsData.confidenceScore && sdsData.confidenceScore > bestSDS.confidenceScore) {
+      if (!bestSDS.sdsConfidenceScore || sdsData.sdsConfidenceScore && sdsData.sdsConfidenceScore > bestSDS.sdsConfidenceScore) {
         console.log('New Best SDS found')
         bestSDS = sdsData;
         bestSDS.sdsLink = currLink;
       }
 
-      if (bestSDS.confidenceScore > 70) {
+      if (bestSDS.sdsConfidenceScore > 70) {
         console.log('SDS PASSES VALIDATION');
         return bestSDS;
       } else {
         console.log('Checking next SDS for better confidence score');
-        console.log(`⏳ Sleeping the scraper for ${ms} ms...`);
-        await sleep(ms);
+        await sleep();
       }
    };
       console.warn('No SDS passes validation - returning best avaliable')
@@ -84,7 +76,7 @@ export async function scrapeFisherSDS(chemicalData, page, cookieString) {
   };
 
     //save path to file
-    const saveDir = "C:/Users/cd02m/OneDrive/Desktop/Chem_Database/Chemical-Database-Generator/temp_pdf";
+    const saveDir = "./data/temp_pdf";
     if (!fs.existsSync(saveDir)) fs.mkdirSync(saveDir, { recursive: true });
     const pdfPath = `${saveDir}/temp.pdf`;
     const textPath = `${saveDir}/temp.txt`; 
@@ -111,6 +103,7 @@ export async function scrapeFisherSDS(chemicalData, page, cookieString) {
     //filter text to remove page breaks - can cause weird parsing
 
     const contactInfo = 'Company Thermo Fisher Scientific Chemicals, Inc. 30 Bond Street Ward Hill, MA 01835-8099 Tel: 800-343-0660 Fax: 800-322-4757 Emergency Telephone Number For information US call: 001-800-227-6701 / Europe call: +32 14 57 52 11 Emergency Number US: 001-201-796-7100 / Europe: +32 14 57 52 99 CHEMTREC Tel. No. US: 001-800-424-9300 / Europe: 001-703-527-3887'
+    const contactInfo2 = 'Company Fisher Scientific Company One Reagent Lane Fair Lawn, NJ 07410 Tel: (201) 796-7100 Acros Organics One Reagent Lane Fair Lawn, NJ 0741'
 
     let cleanText = rawText
   .replace(/Page\s*\d+\s*(?:\/|of)\s*\d+/gi, '')     // Remove 'Page 1 of 8' or 'Page 1/8'
@@ -118,21 +111,41 @@ export async function scrapeFisherSDS(chemicalData, page, cookieString) {
   .replace(/^\s*\d+\s*$/gm, '')                      // Remove lines that are just numbers
   .replace(/\f/g, '')                                // Remove form-feed page breaks
   .replace(/\s{2,}/g, ' ')                           // Collapse extra spaces
-  .replace(new RegExp(contactInfo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), ''); // Remove contact info block
+  .replace(new RegExp(contactInfo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), '')
+  .replace(new RegExp(contactInfo2.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), ''); // Remove contact info block
 
 
-  const sectionPatterns = [
-  /3\.\s*Composition[\s\S]*?(?=9\.\s*Physical|$)/i,
-  /10\.\s*Stability[\s\S]*?(?=14\.\s*Transport|$)/i,
-  /15\.\s*Regulatory[\s\S]*?(?=(?:End\s+of\s+(?:SDS|Safety\s+Data\s+Sheet))|$)/i
+  const sectionMap = [
+  { number: 1, title: 'Identification' },
+  { number: 2, title: 'Hazard(s) identification' },
+  { number: 3, title: 'Composition/Information on Ingredients' },
+  { number: 4, title: 'First-aid measures' },
+  { number: 5, title: 'Fire-fighting measures' },
+  { number: 6, title: 'Accidental release measures' },
+  { number: 7, title: 'Handling and storage' },
+  { number: 8, title: 'Exposure controls' },
+  { number: 9, title: 'Physical and chemical properties' },
+  { number: 10, title: 'Stability and reactivity' },
+  { number: 11, title: 'Toxicological information' },
+  { number: 12, title: 'Ecological information' },
+  { number: 13, title: 'Disposal considerations' },
+  { number: 14, title: 'Transport information' },
+  { number: 15, title: 'Regulatory information' },
+  { number: 16, title: 'Other information' }
 ];
 
-for (const pattern of sectionPatterns) {
-  const match = cleanText.match(pattern);
-  if (match) cleanText = cleanText.replace(match[0], '');
+for (const { number, title } of sectionMap) {
+  // make a forgiving pattern (handles spacing and case issues)
+  const pattern = new RegExp(
+    `\\b${number}\\s*\\.\\s*${title.replace(/\s+/g, '\\s*')}\\b`,
+    'i'
+  );
+
+  cleanText = cleanText.replace(
+    pattern,
+    `\n\n<<<SECTION_${number}_START>>>\n${number}\n\n`
+  );
 }
-
-
 
     fs.writeFileSync(textPath, cleanText, 'utf-8');
     

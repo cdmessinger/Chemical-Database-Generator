@@ -28,17 +28,19 @@ export async function parsePubChemData(apiRawData) {
         }
     }
 
-    const chemicalData = {};
+    const parsedData = {};
 
-    chemicalData.casNumbers = casNumbers;
-    chemicalData.molecularFormula = molecularFormula;
-    chemicalData.molecularWeight = molecularWeight;
-    chemicalData.signalWord = hazardInformation.signalWord;
-    chemicalData.pictograms = hazardInformation.pictograms;
-    chemicalData.hazardStatements = hazardInformation.hazardStatements;
-    chemicalData.errorStatements = errorStatements;
+    parsedData.pubChemCASNumbers = casNumbers;
+    parsedData.pubChemMolecularFormula = molecularFormula;
+    parsedData.pubChemMolecularWeight = molecularWeight;
+    parsedData.pubChemSignalWord = hazardInformation.signalWord;
+    parsedData.pubChemPictograms = hazardInformation.pictograms;
+    parsedData.picogramCodes = 'temp'; //do this later lol
+    parsedData.pubChemHazardStatements = hazardInformation.hazardStatements;
+    parsedData.errorStatements = errorStatements;
 
-    return chemicalData;
+
+    return parsedData;
 }
 
 function findSection(sections, heading) {
@@ -67,9 +69,9 @@ function findCASNumbers(rawData) {
     const casNumberSet = new Set();
 
     for (let i=0; i < casInfo.length; i++) {
-        const currentCAS = casInfo[i].Value?.StringWithMarkup?.[0]?.String;
-        if (currentCAS) {
-            casNumberSet.add(currentCAS);
+        const searchQuery = casInfo[i].Value?.StringWithMarkup?.[0]?.String;
+        if (searchQuery) {
+            casNumberSet.add(searchQuery);
         }
     }
     const casNumbers = [...casNumberSet];
