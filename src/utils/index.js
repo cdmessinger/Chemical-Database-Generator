@@ -23,6 +23,7 @@ import { exportToExcel } from "../importerExporter/exportToExcel.js";
 import { sleep } from "./sleep.js";
 import { pdfParse } from "../sdsScraper/pdfparser.js";
 import { buildChemicalData } from "./buildChemicalData.js";
+import { run } from '../core/run.js';
 
 
 //exports
@@ -46,5 +47,6 @@ export {
     exportToExcel,
     sleep,
     pdfParse,
-    buildChemicalData
+    buildChemicalData,
+    run
 }

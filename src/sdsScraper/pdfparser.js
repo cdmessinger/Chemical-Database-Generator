@@ -110,19 +110,27 @@ export function pdfParse(chemicalData, textPath) {
         }
 
         //Grab Hazard Statements and separate them for csv exporter later
+        
         const unfilteredHazards = cleanedText.match(/Hazard Statements[:\s]*([\s\S]*?)(?=Precautionary|$)/i);
 
         if (unfilteredHazards && unfilteredHazards[1]) {
             const hazardBlock = unfilteredHazards[1].trim();
 
             // Only capture hazard statements that *start* with Causes, May, Harmful, H###
-            const hazardArray = hazardBlock.match(/\b(?:Causes|May|Harmful|H\d{3})[\s\S]*?(?=\b(?:Causes|May|Harmful|H\d{3})\b|$)/gi) || [];
+            const hazardArray = hazardBlock.match(/\b(?:Causes|May|Harmful|Fatal|Toxic|H\d{3})[^0-9]+?(?=(?:Causes|May|Harmful|Fatal|Toxic|H\d{3})|Category|$)/gi) || [];
 
-            sdsData.sdsHazardStatements = hazardArray.length > 0
-                ? hazardArray
-                : 'No valid hazard statements found';
+            //removes random single words
+            const cleanedHazardArray = hazardArray.filter(hazard => {
+            const trimmed = hazard.trim();
+            return !(trimmed.startsWith('toxicity') || trimmed.startsWith('Toxicity'));
+            });
+
+
+            sdsData.sdsHazardStatements = cleanedHazardArray.length > 0
+                ? cleanedHazardArray
+                : 'No valid hazard statements found or are not identified for this SDS';
         } else {
-            sdsData.sdsHazardStatements = 'Hazard Statements not found';
+            sdsData.sdsHazardStatements = 'Hazard Statements not found or are not identified for this SDS';
             sdsData.errorCode.push("Error: could not retrieve Hazard Statements from SDS");
         }
 
