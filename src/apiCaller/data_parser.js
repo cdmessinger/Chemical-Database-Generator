@@ -35,7 +35,7 @@ export async function parsePubChemData(apiRawData) {
     parsedData.pubChemMolecularWeight = molecularWeight;
     parsedData.pubChemSignalWord = hazardInformation.signalWord;
     parsedData.pubChemPictograms = hazardInformation.pictograms;
-    parsedData.picogramCodes = 'temp'; //do this later lol
+    parsedData.pictogramCodes = hazardInformation.pictogramCodes;
     parsedData.pubChemHazardStatements = hazardInformation.hazardStatements;
     parsedData.errorStatements = errorStatements;
 
@@ -155,6 +155,39 @@ function findHazardInformation(rawData) {
         if (pictograms.length === 0) {
             errorStatements.push('Pubchem parsing Error: Pictograms not found')
         }
+        
+        //setting pictogram codes for exporting (Uses GHS codes)
+
+        const pictogramCodes = [];
+        for (let i=0; i < pictograms.length; i++) {
+            const currPictogram = pictograms[i].toLowerCase().trim();
+
+            if (currPictogram.includes('acute')) {
+                pictogramCodes.push('AC');
+            } else if (currPictogram.includes('corrosive')) {
+                pictogramCodes.push('CO');
+            } else if (currPictogram.includes('explosive')) {
+                pictogramCodes.push('EX');
+            } else if (currPictogram.includes('gas')) {
+                pictogramCodes.push('GA');
+            } else if (currPictogram.includes('oxidizer')) {
+                pictogramCodes.push('OX');
+            } else if (currPictogram.includes('carcinogen') || currPictogram.includes('health hazard')) {
+                pictogramCodes.push('CA');
+            } else if (currPictogram.includes('environmental')) {
+                pictogramCodes.push('EN');
+            } else if (currPictogram.includes('flammable')) {
+                pictogramCodes.push('FL');
+            } else if (currPictogram.includes('irritant')) {
+                pictogramCodes.push('IR');
+            } else (
+                errorStatements.push('Error: could not identify one or more pictogram codes')
+            )
+        }
+
+        if (pictogramCodes.length === 0) {
+            errorStatements.push('Pubchem parsing Error: Pictograms could not be converted to Codes')
+        }
 
 
         //find Hazard Statements (just for manual auditing later if needed)
@@ -182,10 +215,10 @@ function findHazardInformation(rawData) {
             errorStatements.push('Pubchem parsing Error: Hazard Statements not found');
         }
 
-        return { signalWord, pictograms, hazardStatements, errorStatements };
+        return { signalWord, pictograms, pictogramCodes, hazardStatements, errorStatements };
 
     } catch (err) {
         console.error("Error parsing pubchem information", err.message) 
-        return { signalWord: null, pictograms: [], hazardStatements: [], errorStatements: [`Fatal parser error: ${err.message}`] };
+        return { signalWord: null, pictograms: [], pictogramCodes: [], hazardStatements: [], errorStatements: [`Fatal parser error: ${err.message}`] };
     }
 }

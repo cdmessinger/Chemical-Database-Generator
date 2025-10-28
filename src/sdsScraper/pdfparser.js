@@ -92,7 +92,7 @@ export function pdfParse(chemicalData, textPath) {
         //Grab Synonyms
         const synonyms = cleanedText.match(/Synonyms[:\s]*([\s\S]*?)(?=Recommended)/i); //stops at "recommended" which is next section
         if (synonyms && synonyms[1]) {
-            sdsData.sdsSynonyms = synonyms[1].trim();
+            sdsData.sdsSynonyms = synonyms[1].split(',').map(s => s.trim()).filter(s => s.length > 0);;
         }
         else {
             sdsData.sdsSynonyms = 'Synonyms not found';

@@ -20,7 +20,7 @@ const keyMap = {
   pubChemMolecularWeight: { key: "pubChemMolecularWeight", default: "Not Found" },
   pubChemSignalWord: { key: "pubChemSignalWord", default: "Not Found" },
   pubChemPictograms: { key: "pubChemPictograms", default: [] },
-  picogramCodes: { key: "picogramCodes", default: [] },
+  pictogramCodes: { key: "pictogramCodes", default: [] },
   pubChemHazardStatements: { key: "pubChemHazardStatements", default: [] },
 
   // SDS Parser Values
