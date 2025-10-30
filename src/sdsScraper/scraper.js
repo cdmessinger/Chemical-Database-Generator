@@ -54,7 +54,10 @@ export async function scrapeFisherSDS(chemicalData, page, cookieString) {
         console.log('SDS PASSES VALIDATION');
         return bestSDS;
       } else {
+        console.log('==============================')
         console.log('Checking next SDS for better confidence score');
+        console.log('==============================')
+
         await sleep();
       }
    };
@@ -98,10 +101,8 @@ export async function scrapeFisherSDS(chemicalData, page, cookieString) {
       const content = await currPage.getTextContent();
       rawText += content.items.map(item => item.str).join(" ") + "\n";
     }
-    console.log('first 300 characters:', rawText.slice(0,300))
-    
-    //filter text to remove page breaks - can cause weird parsing
 
+    //filter text to remove page breaks - can cause weird parsing
     const contactInfo = 'Company Thermo Fisher Scientific Chemicals, Inc. 30 Bond Street Ward Hill, MA 01835-8099 Tel: 800-343-0660 Fax: 800-322-4757 Emergency Telephone Number For information US call: 001-800-227-6701 / Europe call: +32 14 57 52 11 Emergency Number US: 001-201-796-7100 / Europe: +32 14 57 52 99 CHEMTREC Tel. No. US: 001-800-424-9300 / Europe: 001-703-527-3887'
     const contactInfo2 = 'Company Fisher Scientific Company One Reagent Lane Fair Lawn, NJ 07410 Tel: (201) 796-7100 Acros Organics One Reagent Lane Fair Lawn, NJ 0741'
 

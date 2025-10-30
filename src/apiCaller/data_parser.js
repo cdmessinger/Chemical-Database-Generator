@@ -11,15 +11,15 @@ export async function parsePubChemData(apiRawData) {
 
     const casNumbers = findCASNumbers(rawData);
     if (casNumbers.length === 0) {
-        errorStatements.push('Pubchem parsing Error: Could not retrieve CAS numbers');
+        errorStatements.push('Pubchem parsing error: Could not retrieve CAS numbers');
     }
     const molecularFormula = findFormula(rawData);
     if (!molecularFormula) {
-        errorStatements.push('Pubchem parsing Error: Could not retrieve Molecular Formula');
+        errorStatements.push('Pubchem parsing error: Could not retrieve Molecular Formula');
     }
     const molecularWeight = findWeight(rawData);
     if (!molecularWeight) {
-        errorStatements.push('Pubchem parsing Error: Could not retrieve Molecular Weight');
+        errorStatements.push('Pubchem parsing error: Could not retrieve Molecular Weight');
     }
     const hazardInformation = findHazardInformation(rawData);
     if (hazardInformation?.errorStatements) {
@@ -136,24 +136,41 @@ function findHazardInformation(rawData) {
         }
 
         if (!signalWord) {
-            errorStatements.push('Pubchem parsing Error: Signal Word not found')
+            errorStatements.push('Pubchem parsing error: Signal Word not found')
         }
 
         //get pictograms
-        const pictogramSet = new Set(); 
+        const pictogramList =[];
+        let pictogramReferences = 0;
         for (let i = 0; i < ghsSection.length; i++) {
             const item = ghsSection[i];
             if (item.Name === "Pictogram(s)") {
                 const pictogramSection = item?.Value?.StringWithMarkup[0]?.Markup || [];
                 for (let j = 0; j < pictogramSection.length; j++) {
                     let currPictogram = pictogramSection[j];
-                    pictogramSet.add(currPictogram.Extra);
+                    pictogramList.push(currPictogram.Extra);
                 }
+                pictogramReferences += 1;
             }
         }
-        const pictograms = [...pictogramSet]
+
+        let counts = {};
+        const pictograms = [];
+
+        for (const p of pictogramList) {
+            counts[p] = (counts[p] || 0) + 1;
+        }
+
+        for (const key in counts) {
+            const refCount = pictogramReferences.length || 1;
+            const frequency = counts[key]/refCount;
+            if (frequency > 0.5) {
+                pictograms.push(key);
+            }
+        }
+        
         if (pictograms.length === 0) {
-            errorStatements.push('Pubchem parsing Error: Pictograms not found')
+            errorStatements.push('Pubchem parsing error: Pictograms not found')
         }
         
         //setting pictogram codes for exporting (Uses GHS codes)
@@ -186,7 +203,7 @@ function findHazardInformation(rawData) {
         }
 
         if (pictogramCodes.length === 0) {
-            errorStatements.push('Pubchem parsing Error: Pictograms could not be converted to Codes')
+            errorStatements.push('Pubchem parsing error: Pictograms could not be converted to Codes')
         }
 
 
@@ -200,11 +217,11 @@ function findHazardInformation(rawData) {
                 const hazardSection = item?.Value?.StringWithMarkup || [];
                 for (let j = 0; j < hazardSection.length; j++) {
                     let currHazard = hazardSection[j].String;
-                    const codeMatch = currHazard.match(/H\d{3}/); // 👈 find H-code
+                    const codeMatch = currHazard.match(/H\d{3}/); // find H-code
 
                     if (!codeMatch || !seenCodes.has(codeMatch[0])) {
                         if (codeMatch) seenCodes.add(codeMatch[0]);
-                        hazardStatements.push(currHazard.trim()); // 👈 add full text
+                        hazardStatements.push(currHazard.trim()); // add full text
                     }
                     
                 }
@@ -212,7 +229,7 @@ function findHazardInformation(rawData) {
         }
 
         if (hazardStatements.length === 0) {
-            errorStatements.push('Pubchem parsing Error: Hazard Statements not found');
+            errorStatements.push('Pubchem parsing error: Hazard Statements not found');
         }
 
         return { signalWord, pictograms, pictogramCodes, hazardStatements, errorStatements };

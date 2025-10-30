@@ -13,6 +13,10 @@ import {
 
 
 export async function run(filePath) {
+
+    //runtime
+    const start = Date.now(); 
+
     const allRecords = [];
     let lastData = {}; 
 
@@ -31,7 +35,9 @@ export async function run(filePath) {
     errors: 0
     }
     
+    console.log('==============================')
     console.log(`Successfully imported ${totalChemicals} chemical(s)`);
+    console.log('==============================')
 
     //start the websession in puppeteer
     const { browser, page, cookieString } = await openBrowser();
@@ -49,13 +55,10 @@ export async function run(filePath) {
             //check is last CAS is a duplicate, save memory and time
             if (lastData.searchQuery && searchQuery === lastData.searchQuery) {
                 console.log('Current CAS matches the previous one, skipping lookup & copying data');
-                Object.keys(lastData).forEach((key) => {
-                    if (!chemicalData[key]) {
-                        chemicalData[key] = lastData[key];
-                    };
-                });
+                chemicalData = buildChemicalData(chemicalData, lastData);
                 allRecords.push(chemicalData);
-                lastData = chemicalData;
+                const clonedData = structuredClone(chemicalData);
+                lastData = clonedData;
                 continue;
             } else {
                 //Normal functionality
@@ -128,11 +131,16 @@ export async function run(filePath) {
 
                 //add the data to our records
                 allRecords.push(chemicalData);
-                
+
+                console.log('==============================')
+                console.log(`Chemical ${i+1} / ${totalChemicals} completed.`)
+                console.log('==============================')
+        
                 //Call sleep function to limit API requests, unless on the last index.
                 if (i !== (chemicalList.length-1)) {
                     await sleep(); 
                 }
+                
                 lastData = chemicalData; //set lastData to check for duplicates and save time
             }
 
@@ -146,11 +154,35 @@ export async function run(filePath) {
     await closeBrowser(browser);
 
     //Generate success report
+    console.log('==============================')
     console.log('TOTAL SUMMARY:');
     console.log('TOTAL CHEMICALS SEARCHED:', successReport.totalChemicals);
     console.log('PASSED SDS:', successReport.passedSDS);
     console.log('SDS NEEDS REVIEW:', successReport.reviewSDS);
     console.log('FAILED SDS:', successReport.failedSDS);
+    console.log('==============================')
+
+
+    //end runtime
+    const end = Date.now();
+    let runTime = '';
+    const totalSeconds = (end - start) / 1000;
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = (totalSeconds % 60).toFixed(1);
+    if (minutes !== 0) {
+        runTime = `${minutes}minutes, ${seconds}seconds.`
+    } else {
+        runTime = `${seconds} seconds.`
+    }
+
+    successReport.runTime = runTime;
+
+    const runDate = new Date(end);
+    successReport.runDate = runDate.toLocaleString();
+
+    console.log('==============================')
+    console.log(`RUNTIME: ${runTime}`)
+    console.log('==============================')
 
     //Export our data to an excel file
     exportToExcel(allRecords, 'chemical_database.xlsx', successReport)
@@ -170,13 +202,19 @@ async function openBrowser() {
     const cookies = await page.cookies();
     const cookieString = cookies.map(c => `${c.name}=${c.value}`).join("; ");
 
+    console.log('==============================')
     console.log('Browser initialized')
+    console.log('==============================')
+
     return { browser, page, cookieString };
 }
 
 async function closeBrowser(browser) {
     await browser.close();
+    console.log('==============================')
     console.log('Browser Closed')
+    console.log('==============================')
+
 }
 
 async function cleanTempFiles() {

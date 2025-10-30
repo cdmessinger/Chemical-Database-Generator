@@ -22,7 +22,7 @@ export async function fetchFromPubChem(searchQuery) {
         const casRegex = /^\d{2,7}-\d{2}-\d$/; //cas template
         const cleanSynonyms = synonyms.filter(syn => !casRegex.test(syn)); //removes any CAS Numbers from the dataset
 
-        const chemicalName = cleanSynonyms[0] || "Unknown"; //first index is the most common name
+        const chemicalName = cleanSynonyms[0] || "Product name not found"; //first index is the most common name
         const topSynonyms = cleanSynonyms.slice(1,6); //grabs the next 5 most common names
 
         //Step 3: Get chemical data from cidNumber
@@ -47,3 +47,5 @@ export async function fetchFromPubChem(searchQuery) {
         return null;
     }
 }
+
+fetchFromPubChem('90-15-3')
