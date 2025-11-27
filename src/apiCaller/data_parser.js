@@ -35,10 +35,9 @@ export async function parsePubChemData(apiRawData) {
     parsedData.pubChemMolecularWeight = molecularWeight;
     parsedData.pubChemSignalWord = hazardInformation.signalWord;
     parsedData.pubChemPictograms = hazardInformation.pictograms;
-    parsedData.pictogramCodes = hazardInformation.pictogramCodes;
+    parsedData.pubChemPictogramCodes = hazardInformation.pictogramCodes;
     parsedData.pubChemHazardStatements = hazardInformation.hazardStatements;
     parsedData.errorStatements = errorStatements;
-
 
     return parsedData;
 }

@@ -17,22 +17,27 @@ export async function run(filePath) {
     //runtime
     const start = Date.now(); 
 
-    const allRecords = [];
-    let lastData = {}; 
+    const allRecords = []; //all data export
+    const firstCell = 2 // for tracking cell number in "badMatches" for success report, we multiple index by 7 and add this
+    let lastData = {}; //stores last data to check for duplicates 
+    let lastErrors = {}; //stores last errors for duplicates
 
-    //Import our data:
+
+    //Import our data
     const chemicalList =  await importExcel(filePath);
+
     if (!chemicalList) {
         throw new Error('Error: could not import chemical Data')
     } 
     //QA stuff
     const totalChemicals = chemicalList.length;
     const successReport = {
-    totalChemicals,
-    passedSDS: 0,
-    reviewSDS: 0,
-    failedSDS: 0,
-    errors: 0
+        totalChemicals,
+        badMatches: {}, //for labeling each mismatched chemical w/ row number in excel export
+        passedSDS: 0,
+        reviewSDS: 0,
+        failedSDS: 0,
+        errors: 0
     }
     
     console.log('==============================')
@@ -56,6 +61,25 @@ export async function run(filePath) {
             if (lastData.searchQuery && searchQuery === lastData.searchQuery) {
                 console.log('Current CAS matches the previous one, skipping lookup & copying data');
                 chemicalData = buildChemicalData(chemicalData, lastData);
+                chemicalData.errorStatements = lastErrors;
+
+                //update total validation numbers
+                if (chemicalData.sdsConfidenceScore >= 70) {
+                    successReport.passedSDS += 1;
+                } else if (chemicalData.sdsConfidenceScore < 40) {
+                    successReport.failedSDS += 1;
+                    const cellIndex = (i * 7) + firstCell;
+                    successReport.badMatches[cellIndex] = chemicalData.importedProductName;
+                    
+                } else {
+                    successReport.reviewSDS += 1;
+                    const cellIndex = (i * 7) + firstCell;
+                    successReport.badMatches[cellIndex] = chemicalData.importedProductName;
+                }
+                
+                if (errorStatements.length !== 0) {
+                    successReport.errrors += 1;
+                }
                 allRecords.push(chemicalData);
                 const clonedData = structuredClone(chemicalData);
                 lastData = clonedData;
@@ -117,8 +141,12 @@ export async function run(filePath) {
                     successReport.passedSDS += 1;
                 } else if (chemicalData.sdsConfidenceScore < 40) {
                     successReport.failedSDS += 1;
+                    const cellIndex = (i * 7) + firstCell;
+                    successReport.badMatches[cellIndex] = chemicalData.importedProductName
                 } else {
                     successReport.reviewSDS += 1;
+                    const cellIndex = (i * 7) + firstCell;
+                    successReport.badMatches[cellIndex] = chemicalData.importedProductName
                 }
                 
                 if (errorStatements.length !== 0) {
@@ -142,6 +170,7 @@ export async function run(filePath) {
                 }
                 
                 lastData = chemicalData; //set lastData to check for duplicates and save time
+                lastErrors = errorStatements; //saves error statements incase of duplicates
             }
 
         } catch (err) {
@@ -184,11 +213,13 @@ export async function run(filePath) {
     console.log(`RUNTIME: ${runTime}`)
     console.log('==============================')
 
+    console.log('BAD MATCHES:', successReport.badMatches)
+
     //Export our data to an excel file
     exportToExcel(allRecords, 'chemical_database.xlsx', successReport)
     
     //Delete temp files used in scraping
-    await cleanTempFiles();
+    // await cleanTempFiles();
 
 }
 

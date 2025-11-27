@@ -20,7 +20,7 @@ const keyMap = {
   pubChemMolecularWeight: { key: "pubChemMolecularWeight", default: "Not Found" },
   pubChemSignalWord: { key: "pubChemSignalWord", default: "Not Found" },
   pubChemPictograms: { key: "pubChemPictograms", default: [] },
-  pictogramCodes: { key: "pictogramCodes", default: [] },
+  pubChemPictogramCodes: { key: "pubChemPictogramCodes", default: [] },
   pubChemHazardStatements: { key: "pubChemHazardStatements", default: [] },
 
   // SDS Parser Values
@@ -34,6 +34,8 @@ const keyMap = {
   sdsMolecularFormula: { key: "sdsMolecularFormula", default: "Not Found" },
   sdsMolecularWeight: { key: "sdsMolecularWeight", default: "Not Found" },
   sdsStorageNotes: { key: "sdsStorageNotes", default: "Not Found" },
+  sdsPictograms: { key: 'sdsPictograms', default: 'Not Found'},
+  sdsPictogramCodes: { key: 'sdsPictogramCodes', default: 'Not Found'},
 
   // Validation Values
   sdsStatusCode: { key: "sdsStatusCode", default: "Not Found" },

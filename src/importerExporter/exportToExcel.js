@@ -53,6 +53,25 @@ function writeSuccessReport(summarySheet, successReport) {
     const completed = generateSuccessReport(successReport);
     const row = summarySheet.addRow(['']);
     row.getCell(1).value = completed;
+    summarySheet.mergeCells(1,1,40,5)
+
+    summarySheet.getCell(1, 7).value = 'FAILED CHEMICAL NAME';
+    summarySheet.getCell(1, 8).value = 'ROW NUMBER IN FULL DATA SHEET';
+    summarySheet.getCell(1, 7).font = { bold: true };
+    summarySheet.getCell(1, 8).font = { bold: true };
+    
+    const badMatches = successReport.badMatches;
+    let rowCounter = 2; //start at row 2 
+    for (const key in badMatches) {
+        const value = badMatches[key];
+        summarySheet.getCell(rowCounter, 7).value = value;
+        summarySheet.getCell(rowCounter, 8).value = key;
+        rowCounter += 1;
+    }
+
+    summarySheet.getColumn(1).alignment = { wrapText: true, horizontal: 'center', vertical: 'center' };
+    summarySheet.getColumn(2).alignment = { wrapText: true, horizontal: 'center', vertical: 'center' };
+    summarySheet.getColumn(3).alignment = { wrapText: true, horizontal: 'center', vertical: 'center' };
 }
 
 function determineExportables(record) {
@@ -94,7 +113,15 @@ function determineExportables(record) {
     } else if (record.pubChemSignalWord) {
         record.exportableSW = record.pubChemSignalWord;
     } else {
-        record.exportableSW = 'Missing'
+        record.exportableSW = 'Missing';
+    }
+    //formula
+    if (record.sdsMolecularFormula !== 'Formula not found') {
+        record.exportableMF = record.sdsMolecularFormula;
+    } else if (record.pubChemMolecularFormula) {
+        record.exportableMF = record.pubChemMolecularFormula;
+    } else {
+        record.exportableMF = 'Missing';
     }
 
     return record;
@@ -108,24 +135,26 @@ function writeDataSheet(dataSheet, parsedData) {
     dataSheet.getCell(1,1).value = 'SEARCHED';
     dataSheet.getCell(1,2).value = 'SUMMARY';
     dataSheet.getCell(1,3).value = '';
-    dataSheet.getCell(1,4).value = '---------------------------------------------------------------------------------EXPORTS (LINKED TO EXPORT SHEET---------------------------------------------------------------------------------';
-    dataSheet.getCell(1,5).value = '';
+    dataSheet.getCell(1,4).value = '';
+    dataSheet.getCell(1,5).value = '---------------------------------------------------------------------------------EXPORTS (LINKED TO EXPORT SHEET---------------------------------------------------------------------------------';
     dataSheet.getCell(1,6).value = '';
     dataSheet.getCell(1,7).value = '';
     dataSheet.getCell(1,8).value = '';
     dataSheet.getCell(1,9).value = '';
     dataSheet.getCell(1,10).value = '';
-    dataSheet.getCell(1,11).value = 'COMPARE';
-    dataSheet.getCell(1,12).value = 'IMPORTED';
-    dataSheet.getCell(1,13).value = 'PUBCHEM';
-    dataSheet.getCell(1,14).value = 'SDS SHEET';
-    dataSheet.getCell(1,15).value = 'HAZARDS';
-    dataSheet.getCell(1,16).value = 'PICTOGRAMS';
+    dataSheet.getCell(1,11).value = '';
+    dataSheet.getCell(1,12).value = 'COMPARE';
+    dataSheet.getCell(1,13).value = 'IMPORTED';
+    dataSheet.getCell(1,14).value = 'PUBCHEM';
+    dataSheet.getCell(1,15).value = 'SDS SHEET';
+    dataSheet.getCell(1,16).value = 'HAZARDS';
+    dataSheet.getCell(1,17).value = 'PICTOGRAMS';
+    dataSheet.getCell(1,18).value = 'PICTOGRAM CODES';
     
     
     //merge headers
     dataSheet.mergeCells(1, 2, 1, 3);
-    dataSheet.mergeCells(1, 4, 1, 9);
+    dataSheet.mergeCells(1, 5, 1, 10);
 
     let startRow = 2;
 
@@ -138,115 +167,129 @@ function writeDataSheet(dataSheet, parsedData) {
         dataSheet.getCell(startRow, 1).value = record.importedProductName;
         dataSheet.getCell(startRow, 2).value = 'STATUS CODE:';
         dataSheet.getCell(startRow, 3).value = record.sdsStatusCode;
-        dataSheet.getCell(startRow, 4).value = 'NAME:';
-        dataSheet.getCell(startRow, 5).value = record.exportableName;
-        dataSheet.getCell(startRow, 6).value = 'HAZARDS:'
-        dataSheet.getCell(startRow, 7).value = formatCellValue(record.exportableHaz);
-        dataSheet.getCell(startRow, 8).value = 'UNITS'
-        dataSheet.getCell(startRow, 9).value = record.importedUnits;
-        dataSheet.getCell(startRow, 10).value = '';
-        dataSheet.getCell(startRow, 11).value = 'NAME: ';
-        dataSheet.getCell(startRow, 12).value = record.importedProductName;
-        dataSheet.getCell(startRow, 13).value = record.pubChemProductName;
-        dataSheet.getCell(startRow, 14).value = record.sdsProductName;
-        dataSheet.getCell(startRow, 15).value = formatCellValue(record.sdsHazardStatements);
-        dataSheet.getCell(startRow, 16).value = formatCellValue(record.pubChemPictograms);
+        dataSheet.getCell(startRow, 4).value = '----------->';
+        dataSheet.getCell(startRow, 5).value = 'NAME:';
+        dataSheet.getCell(startRow, 6).value = record.exportableName;
+        dataSheet.getCell(startRow, 7).value = 'HAZARDS:'
+        dataSheet.getCell(startRow, 8).value = formatCellValue(record.exportableHaz);
+        dataSheet.getCell(startRow, 9).value = 'UNITS'
+        dataSheet.getCell(startRow, 10).value = record.importedUnits;
+        dataSheet.getCell(startRow, 11).value = '<-----------';
+        dataSheet.getCell(startRow, 12).value = 'NAME: ';
+        dataSheet.getCell(startRow, 13).value = record.importedProductName;
+        dataSheet.getCell(startRow, 14).value = record.pubChemProductName;
+        dataSheet.getCell(startRow, 15).value = record.sdsProductName;
+        dataSheet.getCell(startRow, 16).value = formatCellValue(record.sdsHazardStatements);
+        dataSheet.getCell(startRow, 17).value = formatCellValue(record.sdsPictograms);
+        dataSheet.getCell(startRow, 18).value = formatCellValue(record.sdsPictogramCodes);
 
-        
+
         //row 2
         dataSheet.getCell(startRow + 1, 1).value = '';
         dataSheet.getCell(startRow + 1, 2).value = 'CONFIDENCE SCORE:';
         dataSheet.getCell(startRow + 1, 3).value = record.sdsConfidenceScore;
-        dataSheet.getCell(startRow + 1, 4).value = 'SYNONYMS:';
-        dataSheet.getCell(startRow + 1, 5).value = formatCellValue(record.exportableSyn);
-        dataSheet.getCell(startRow + 1, 6).value = '';
+        dataSheet.getCell(startRow + 1, 4).value = '----------->';
+        dataSheet.getCell(startRow + 1, 5).value = 'SYNONYMS:';
+        dataSheet.getCell(startRow + 1, 6).value = formatCellValue(record.exportableSyn);
         dataSheet.getCell(startRow + 1, 7).value = '';
-        dataSheet.getCell(startRow + 1, 8).value = 'QUANTITY';
-        dataSheet.getCell(startRow + 1, 9).value = record.importedQuantity;
-        dataSheet.getCell(startRow + 1, 10).value = '';
-        dataSheet.getCell(startRow + 1, 11).value = 'CAS NO.:';
-        dataSheet.getCell(startRow + 1, 12).value = record.searchQuery;
-        dataSheet.getCell(startRow + 1, 13).value = formatCellValue(record.pubChemCASNumbers);
-        dataSheet.getCell(startRow + 1, 14).value = record.sdsCASNumber;
-        dataSheet.getCell(startRow + 1, 15).value = '';
+        dataSheet.getCell(startRow + 1, 8).value = '';
+        dataSheet.getCell(startRow + 1, 9).value = 'QUANTITY';
+        dataSheet.getCell(startRow + 1, 10).value = record.importedQuantity;
+        dataSheet.getCell(startRow + 1, 11).value = '<-----------';
+        dataSheet.getCell(startRow + 1, 12).value = 'CAS NO.:';
+        dataSheet.getCell(startRow + 1, 13).value = record.searchQuery;
+        dataSheet.getCell(startRow + 1, 14).value = formatCellValue(record.pubChemCASNumbers);
+        dataSheet.getCell(startRow + 1, 15).value = record.sdsCASNumber;
         dataSheet.getCell(startRow + 1, 16).value = '';
+        dataSheet.getCell(startRow + 1, 17).value = '';
+        dataSheet.getCell(startRow + 1, 18).value = '';
 
 
         //row 3
         dataSheet.getCell(startRow + 2, 1).value = '';
         dataSheet.getCell(startRow + 2, 2).value = 'CONF. SCORE INFO:';
         dataSheet.getCell(startRow + 2, 3).value = formatCellValue(record.sdsConfidenceInfo);
-        dataSheet.getCell(startRow + 2, 4).value = 'SUPPLIER';
-        dataSheet.getCell(startRow + 2, 5).value = record.importedSupplier;
-        dataSheet.getCell(startRow + 2, 6).value = 'PICTOGRAM CODES:';
-        dataSheet.getCell(startRow + 2, 7).value = formatCellValue(record.pictogramCodes);;
-        dataSheet.getCell(startRow + 2, 8).value = 'STORAGE NOTES';
-        dataSheet.getCell(startRow + 2, 9).value = record.sdsStorageNotes;
-        dataSheet.getCell(startRow + 2, 10).value = '';
-        dataSheet.getCell(startRow + 2, 11).value = 'SYNONYMS:';
-        dataSheet.getCell(startRow + 2, 12).value = '';
-        dataSheet.getCell(startRow + 2, 13).value = formatCellValue(record.pubChemSynonyms);
-        dataSheet.getCell(startRow + 2, 14).value = formatCellValue(record.sdsSynonyms);
-        dataSheet.getCell(startRow + 2, 15).value = '';
+        dataSheet.getCell(startRow + 2, 4).value = '----------->';
+        dataSheet.getCell(startRow + 2, 5).value = 'SUPPLIER';
+        dataSheet.getCell(startRow + 2, 6).value = record.importedSupplier;
+        dataSheet.getCell(startRow + 2, 7).value = 'PICTOGRAM CODES:';
+        dataSheet.getCell(startRow + 2, 8).value = formatCellValue(record.sdsPictogramCodes) || [];
+        dataSheet.getCell(startRow + 2, 9).value = 'STORAGE NOTES';
+        dataSheet.getCell(startRow + 2, 10).value = record.sdsStorageNotes;
+        dataSheet.getCell(startRow + 2, 11).value = '<-----------';
+        dataSheet.getCell(startRow + 2, 12).value = 'SYNONYMS:';
+        dataSheet.getCell(startRow + 2, 13).value = '';
+        dataSheet.getCell(startRow + 2, 14).value = formatCellValue(record.pubChemSynonyms);
+        dataSheet.getCell(startRow + 2, 15).value = formatCellValue(record.sdsSynonyms);
         dataSheet.getCell(startRow + 2, 16).value = '';
+        dataSheet.getCell(startRow + 2, 17).value = '';
+        dataSheet.getCell(startRow + 2, 18).value = '';
 
         //row 4
         dataSheet.getCell(startRow + 3, 1).value = record.searchQuery;
         dataSheet.getCell(startRow + 3, 2).value = '';
         dataSheet.getCell(startRow + 3, 3).value = '';
-        dataSheet.getCell(startRow + 3, 4).value = 'CAS NO:';
-        dataSheet.getCell(startRow + 3, 5).value = record.exportableCAS;
-        dataSheet.getCell(startRow + 3, 6).value = 'SDS LINK:';
-        dataSheet.getCell(startRow + 3, 7).value = { text: record.sdsLink, hyperlink: record.sdsLink};
+        dataSheet.getCell(startRow + 3, 4).value = '----------->';
+        dataSheet.getCell(startRow + 3, 5).value = 'CAS NO:';
+        dataSheet.getCell(startRow + 3, 6).value = record.exportableCAS;
+        dataSheet.getCell(startRow + 3, 7).value = 'SDS LINK:';
+        dataSheet.getCell(startRow + 3, 8).value = { text: record.sdsLink, hyperlink: record.sdsLink};
         //make it look like a hyperlink
-        dataSheet.getCell(startRow + 3, 7).font = { color: { argb: 'FF0000FF'}, underline: true} 
+        dataSheet.getCell(startRow + 3, 8).font = { color: { argb: 'FF0000FF'}, underline: true} 
 
-        dataSheet.getCell(startRow + 3, 8).value = '';
         dataSheet.getCell(startRow + 3, 9).value = '';
         dataSheet.getCell(startRow + 3, 10).value = '';
-        dataSheet.getCell(startRow + 3, 11).value = 'FORMULA:';
-        dataSheet.getCell(startRow + 3, 12).value = '';
-        dataSheet.getCell(startRow + 3, 13).value = record.pubChemMolecularFormula;
-        dataSheet.getCell(startRow + 3, 14).value = record.sdsMolecularFormula;
-        dataSheet.getCell(startRow + 3, 15).value = formatCellValue(record.pubChemHazardStatements);
-        dataSheet.getCell(startRow + 3, 16).value = formatCellValue(record.pictogramCodes);
+        dataSheet.getCell(startRow + 3, 11).value = '<-----------';
+        dataSheet.getCell(startRow + 3, 12).value = 'FORMULA:';
+        dataSheet.getCell(startRow + 3, 13).value = '';
+        dataSheet.getCell(startRow + 3, 14).value = record.pubChemMolecularFormula;
+        dataSheet.getCell(startRow + 3, 15).value = record.sdsMolecularFormula;
+        dataSheet.getCell(startRow + 3, 16).value = formatCellValue(record.pubChemHazardStatements);
+        dataSheet.getCell(startRow + 3, 17).value = formatCellValue(record.pubChemPictograms);
+        dataSheet.getCell(startRow + 3, 18).value = formatCellValue(record.pubChemPictogramCodes);
 
         //row 5
         dataSheet.getCell(startRow + 4, 1).value = '';
         dataSheet.getCell(startRow + 4, 2).value = '';
         dataSheet.getCell(startRow + 4, 3).value = '';
-        dataSheet.getCell(startRow + 4, 4).value = 'CLASS:';
-        dataSheet.getCell(startRow + 4, 5).value = record.classification;
-        dataSheet.getCell(startRow + 4, 6).value = 'LOCATION:';
-        dataSheet.getCell(startRow + 4, 7).value = record.importedLocation;
-        dataSheet.getCell(startRow + 4, 8).value = '';
-        dataSheet.getCell(startRow + 4, 9).value = '';
-        dataSheet.getCell(startRow + 4, 10).value = '';
-        dataSheet.getCell(startRow + 4, 11).value = 'MW:';
-        dataSheet.getCell(startRow + 4, 12).value = '';
-        dataSheet.getCell(startRow + 4, 13).value = record.pubChemMolecularWeight;
-        dataSheet.getCell(startRow + 4, 14).value = record.sdsMolecularWeight;
-        dataSheet.getCell(startRow + 4, 15).value = '';
+        dataSheet.getCell(startRow + 4, 4).value = '----------->';
+        dataSheet.getCell(startRow + 4, 5).value = 'CLASS:';
+        dataSheet.getCell(startRow + 4, 6).value = record.classification;
+        dataSheet.getCell(startRow + 4, 7).value = 'LOCATION:';
+        dataSheet.getCell(startRow + 4, 8).value = record.importedLocation;
+        dataSheet.getCell(startRow + 4, 9).value = 'FORMULA';
+        dataSheet.getCell(startRow + 4, 10).value = record.exportableMF;
+        dataSheet.getCell(startRow + 4, 11).value = '<-----------';
+        dataSheet.getCell(startRow + 4, 12).value = 'MW:';
+        dataSheet.getCell(startRow + 4, 13).value = '';
+        dataSheet.getCell(startRow + 4, 14).value = record.pubChemMolecularWeight;
+        dataSheet.getCell(startRow + 4, 15).value = record.sdsMolecularWeight;
         dataSheet.getCell(startRow + 4, 16).value = '';
+        dataSheet.getCell(startRow + 4, 17).value = '';
+        dataSheet.getCell(startRow + 4, 18).value = '';
+
 
 
         //row 6
         dataSheet.getCell(startRow + 5, 1).value = '';
         dataSheet.getCell(startRow + 5, 2).value = 'ERRORS:';
         dataSheet.getCell(startRow + 5, 3).value = formatCellValue(record.errorStatements) || '';
-        dataSheet.getCell(startRow + 5, 4).value = 'SIGNAL WORD:'
-        dataSheet.getCell(startRow + 5, 5).value = record.exportableSW;
-        dataSheet.getCell(startRow + 5, 6).value = 'SHELF:'
-        dataSheet.getCell(startRow + 5, 7).value = record.importedCabinet;
-        dataSheet.getCell(startRow + 5, 8).value = 'SDS REV. DATE:'
-        dataSheet.getCell(startRow + 5, 9).value = record.sdsRevisionDate;
-        dataSheet.getCell(startRow + 5, 10).value = '';
-        dataSheet.getCell(startRow + 5, 11).value = 'SIGNAL WORD:';
-        dataSheet.getCell(startRow + 5, 12).value = '';
-        dataSheet.getCell(startRow + 5, 13).value = record.pubChemSignalWord;
-        dataSheet.getCell(startRow + 5, 14).value = record.sdsSignalWord;
-        dataSheet.getCell(startRow + 5, 15).value = '';
+        dataSheet.getCell(startRow + 5, 4).value = '----------->';
+        dataSheet.getCell(startRow + 5, 5).value = 'SIGNAL WORD:'
+        dataSheet.getCell(startRow + 5, 6).value = record.exportableSW;
+        dataSheet.getCell(startRow + 5, 7).value = 'SHELF:'
+        dataSheet.getCell(startRow + 5, 8).value = record.importedCabinet;
+        dataSheet.getCell(startRow + 5, 9).value = 'SDS REV. DATE:'
+        dataSheet.getCell(startRow + 5, 10).value = record.sdsRevisionDate;
+        dataSheet.getCell(startRow + 5, 11).value = '<-----------';
+        dataSheet.getCell(startRow + 5, 12).value = 'SIGNAL WORD:';
+        dataSheet.getCell(startRow + 5, 13).value = '';
+        dataSheet.getCell(startRow + 5, 14).value = record.pubChemSignalWord;
+        dataSheet.getCell(startRow + 5, 15).value = record.sdsSignalWord;
         dataSheet.getCell(startRow + 5, 16).value = '';
+        dataSheet.getCell(startRow + 5, 17).value = '';
+        dataSheet.getCell(startRow + 5, 18).value = '';
+
 
         //Merge cells for formating
 
@@ -260,29 +303,33 @@ function writeDataSheet(dataSheet, parsedData) {
         //col 3
         dataSheet.mergeCells(startRow + 2, 3, startRow + 4, 3);
 
-        //col 4 - 5 NO MERGING
-
-        //col 6
-        dataSheet.mergeCells(startRow, 6, startRow + 1, 6);
+        //col 4 - 6 NO MERGING
 
         //col 7
         dataSheet.mergeCells(startRow, 7, startRow + 1, 7);
 
         //col 8
-        dataSheet.mergeCells(startRow + 2, 8, startRow + 4, 8);
+        dataSheet.mergeCells(startRow, 8, startRow + 1, 8);
 
         //col 9
-        dataSheet.mergeCells(startRow + 2, 9, startRow + 4, 9);
-        
-        //col 10 - 14 NO MERGING
+        dataSheet.mergeCells(startRow + 2, 9, startRow + 3, 9);
 
-        //col 15
-        dataSheet.mergeCells(startRow, 15, startRow+2, 15);
-        dataSheet.mergeCells(startRow+3, 15, startRow+5, 15);
+        //col 10
+        dataSheet.mergeCells(startRow + 2, 10, startRow + 3, 10);
+        
+        //col 11 - 15 NO MERGING
 
         //col 16
         dataSheet.mergeCells(startRow, 16, startRow+2, 16);
         dataSheet.mergeCells(startRow+3, 16, startRow+5, 16);
+
+        //col 17
+        dataSheet.mergeCells(startRow, 17, startRow+2, 17);
+        dataSheet.mergeCells(startRow+3, 17, startRow+5, 17);
+
+        //col 18
+        dataSheet.mergeCells(startRow, 18, startRow+2, 18);
+        dataSheet.mergeCells(startRow+3, 18, startRow+5, 18);
 
 
 
@@ -319,10 +366,10 @@ function confidenceScoreFormating(dataSheet, startRow) {
 }
 
     
-    if (targetCell >= 85) color = '28e482';      // green, extremely confident
-    else if (targetCell >= 70) color = '9fcf74'; // yellow-green, pass
-    else if (targetCell >= 40) color = 'fdf381'; // yellow, needs review
-    else color = 'da5d4c';                  // red, fail
+    if (targetCell >= 85) color = '28e482';       // green, extremely confident
+    else if (targetCell >= 70) color = '9fcf74';  // yellow-green, pass
+    else if (targetCell >= 40) color = 'fdf381';  // yellow, needs review
+    else color = 'da5d4c';                        // red, fail
 
     for (let i=startRow; i < endRow; i++) {
         const row = dataSheet.getRow(i)
@@ -333,7 +380,8 @@ function confidenceScoreFormating(dataSheet, startRow) {
                 fgColor: { argb: color }
             };
         });
-    };
+    }; 
+    //make error statements cell 'red' if they are present for visibility
     if (dataSheet.getCell(startRow + 5, 3).value !== '') {
                 dataSheet.getCell(startRow + 5, 3).fill = {
                 type: 'pattern',
@@ -401,9 +449,9 @@ function writeExportSheet(exportSheet, dataSheet) {
     // Clear previous export
     exportSheet.spliceRows(1, exportSheet.rowCount);
 
-    // Optional: add header row for clarity
+    // Add headers
     exportSheet.addRow([
-        'ChemicalName', 'Synonyms', 'CatalogCode', 'CompanyName', 'Grade', 'Disposal',
+        'ChemicalName', 'Formula', 'Synonyms', 'CatalogCode', 'CompanyName', 'Grade', 'Disposal',
         'CAS', 'Class', 'CompatibleFamily', 'SignalWord', 'HazardStatement', 'GHSCodes',
         'SDSURL', 'School', 'StoreRoom', 'Shelf', 'UOM', 'LastUsed', 'MinReorderAmount',
         'Amount', 'Notes', 'KitCatalog'
@@ -411,34 +459,35 @@ function writeExportSheet(exportSheet, dataSheet) {
 
     // Loop through each card (each card = 6 rows of data)
     for (let referenceRow = startRow; referenceRow < totalRows; referenceRow += cardHeight + 1) {
-        const row = exportSheet.addRow(new Array(22).fill('')); // create a new export row
+        const row = exportSheet.addRow(new Array(23).fill('')); // create a new export row
 
         // ✅ Assign formulas as true live links
-        row.getCell(1).value  = { formula: `=${sheetName}!E${referenceRow}`, result: null };        // ChemicalName
-        row.getCell(2).value  = { formula: `=${sheetName}!E${referenceRow + 1}`, result: null };    // Synonyms
-        row.getCell(3).value  = '';                                                                 // CatalogCode
-        row.getCell(4).value  = { formula: `=${sheetName}!E${referenceRow + 2}`, result: null };    // CompanyName
-        row.getCell(5).value  = '';                                                                 // Grade
-        row.getCell(6).value  = '';                                                                 // Disposal
-        row.getCell(7).value  = { formula: `=${sheetName}!E${referenceRow + 3}`, result: null };    // CAS
-        row.getCell(8).value  = { formula: `=${sheetName}!E${referenceRow + 4}`, result: null };    // Class
-        row.getCell(9).value  = '';                                                                 // CompatibleFamily
-        row.getCell(10).value = { formula: `=${sheetName}!E${referenceRow + 5}`, result: null };    // SignalWord
-        row.getCell(11).value = { formula: `=${sheetName}!G${referenceRow}`, result: null };        // HazardStatement
-        row.getCell(12).value = { formula: `=${sheetName}!G${referenceRow + 2}`, result: null };    // GHSCodes
-        row.getCell(13).value = { formula: `=${sheetName}!G${referenceRow + 3}`, result: null };    // SDSUrl
-        row.getCell(14).value = 'CSCC TUNXIS';                                                      // School
-        row.getCell(15).value = { formula: `=${sheetName}!G${referenceRow + 4}`, result: null };    // StoreRoom
-        row.getCell(16).value = { formula: `=${sheetName}!G${referenceRow + 5}`, result: null };    // Shelf
-        row.getCell(17).value = { formula: `=${sheetName}!I${referenceRow}`, result: null };        // UOM
-        row.getCell(18).value = '';                                                                 // LastUsed
-        row.getCell(19).value = '';                                                                 // MinReorderAmount
-        row.getCell(20).value = { formula: `=${sheetName}!I${referenceRow + 1}`, result: null };    // Amount
-        row.getCell(21).value = { formula: `=${sheetName}!I${referenceRow + 2}`, result: null };    // Notes
-        row.getCell(22).value = '';                                                                 // KitCatalog
+        row.getCell(1).value  = { formula: `=${sheetName}!F${referenceRow}`, result: null };        // ChemicalName
+        row.getCell(2).value  = { formula: `=${sheetName}!J${referenceRow + 4}`, result: null};     // Formula
+        row.getCell(3).value  = { formula: `=${sheetName}!F${referenceRow + 1}`, result: null };    // Synonyms
+        row.getCell(4).value  = '';                                                                 // CatalogCode
+        row.getCell(5).value  = { formula: `=${sheetName}!F${referenceRow + 2}`, result: null };    // CompanyName
+        row.getCell(6).value  = '';                                                                 // Grade
+        row.getCell(7).value  = '';                                                                 // Disposal
+        row.getCell(8).value  = { formula: `=${sheetName}!F${referenceRow + 3}`, result: null };    // CAS
+        row.getCell(9).value  = { formula: `=${sheetName}!F${referenceRow + 4}`, result: null };    // Class
+        row.getCell(10).value  = '';                                                                // CompatibleFamily
+        row.getCell(11).value = { formula: `=${sheetName}!F${referenceRow + 5}`, result: null };    // SignalWord
+        row.getCell(12).value = { formula: `=${sheetName}!H${referenceRow}`, result: null };        // HazardStatement
+        row.getCell(13).value = { formula: `=${sheetName}!H${referenceRow + 2}`, result: null };    // GHSCodes
+        row.getCell(14).value = { formula: `=${sheetName}!H${referenceRow + 3}`, result: null };    // SDSUrl
+        row.getCell(15).value = 'CSCC TUNXIS';                                                      // School
+        row.getCell(16).value = { formula: `=${sheetName}!H${referenceRow + 4}`, result: null };    // StoreRoom
+        row.getCell(17).value = { formula: `=${sheetName}!H${referenceRow + 5}`, result: null };    // Shelf
+        row.getCell(18).value = { formula: `=${sheetName}!J${referenceRow}`, result: null };        // UOM
+        row.getCell(19).value = '';                                                                 // LastUsed
+        row.getCell(20).value = '';                                                                 // MinReorderAmount
+        row.getCell(21).value = { formula: `=${sheetName}!J${referenceRow + 1}`, result: null };    // Amount
+        row.getCell(22).value = { formula: `=${sheetName}!J${referenceRow + 2}`, result: null };    // Notes
+        row.getCell(23).value = '';                                                                  // KitCatalog
     }
 
-    // ✅ Make sure Excel recalculates all formulas when opened
+    // Make sure Excel recalculates all formulas when opened
     exportSheet.workbook.calcProperties.fullCalcOnLoad = true;
 
     // Optional: basic styling for readability
@@ -476,7 +525,7 @@ function addBasicFormating(sheet) {
         const columnNumber = index + 1;
 
         // Fix width for label columns (B, D, F, H, J)
-        if ([2, 4, 6, 8, 11].includes(columnNumber)) {
+        if ([2, 4, 5, 7, 9, 11, 12].includes(columnNumber)) {
             col.width = LABEL_COL_WIDTH;
         } else {
             const calculatedWidth = maxLength + PADDING;
@@ -484,8 +533,6 @@ function addBasicFormating(sheet) {
         }
     });
 }
-
-
 
 
 
@@ -500,21 +547,25 @@ function dataSheetFormating(dataSheet) {
     dataSheet.getColumn(2).alignment = { wrapText: true, horizontal: 'right', vertical: 'middle' };
     dataSheet.getColumn(3).alignment = { wrapText: true, horizontal: 'left', vertical: 'middle' };
     dataSheet.getColumn(4).alignment = { wrapText: true, horizontal: 'right', vertical: 'middle' };
-    dataSheet.getColumn(5).alignment = { wrapText: true, horizontal: 'left', vertical: 'middle' };
-    dataSheet.getColumn(6).alignment = { wrapText: true, horizontal: 'right', vertical: 'middle' };
-    dataSheet.getColumn(7).alignment = { wrapText: true, horizontal: 'left', vertical: 'middle' };
-    dataSheet.getColumn(8).alignment = { wrapText: true, horizontal: 'right', vertical: 'bottom' };
-    dataSheet.getColumn(9).alignment = { wrapText: true, horizontal: 'left', vertical: 'bottom' };
     //separator column
-    dataSheet.getColumn(11).alignment = { wrapText: true, horizontal: 'right', vertical: 'middle' };
-    dataSheet.getColumn(12).alignment = { wrapText: true, horizontal: 'left', vertical: 'middle' };
+    dataSheet.getColumn(6).alignment = { wrapText: true, horizontal: 'left', vertical: 'middle' };
+    dataSheet.getColumn(7).alignment = { wrapText: true, horizontal: 'right', vertical: 'middle' };
+    dataSheet.getColumn(8).alignment = { wrapText: true, horizontal: 'left', vertical: 'middle' };
+    dataSheet.getColumn(9).alignment = { wrapText: true, horizontal: 'right', vertical: 'bottom' };
+    dataSheet.getColumn(10).alignment = { wrapText: true, horizontal: 'left', vertical: 'bottom' };
+    //separator column
+    dataSheet.getColumn(12).alignment = { wrapText: true, horizontal: 'right', vertical: 'middle' };
     dataSheet.getColumn(13).alignment = { wrapText: true, horizontal: 'left', vertical: 'middle' };
     dataSheet.getColumn(14).alignment = { wrapText: true, horizontal: 'left', vertical: 'middle' };
     dataSheet.getColumn(15).alignment = { wrapText: true, horizontal: 'left', vertical: 'middle' };
     dataSheet.getColumn(16).alignment = { wrapText: true, horizontal: 'left', vertical: 'middle' };
+    dataSheet.getColumn(17).alignment = { wrapText: true, horizontal: 'left', vertical: 'middle' };
+    dataSheet.getColumn(18).alignment = { wrapText: true, horizontal: 'left', vertical: 'middle' };
 
 
-    const labelColumns = [2,4,6,8,11];
+
+
+    const labelColumns = [2,4,5,7,9,11,12];
 
     for(const column of labelColumns) 
         dataSheet.getColumn(column).eachCell({ includeEmpty: true }, cell => {
@@ -553,7 +604,7 @@ function dataSheetFormating(dataSheet) {
                 fgColor: { argb: 'FF000000' } //black background
             }
     });
-const dataColumns = [5, 7, 9, 13, 14, 15, 16];
+const dataColumns = [6, 8, 10, 14, 15, 16, 17, 18];
 
 for (const column of dataColumns) {
   const currCol = dataSheet.getColumn(column);
@@ -582,8 +633,15 @@ dataSheet.eachRow((row, rowNumber) => {
       right:  { style: 'medium', color: { argb: 'FFDDDDDD' } },
     };
 
-    // Black fill in column 10 (except header)
-    if (rowNumber !== 1 && colNumber === 10) {
+    // Black fill in column 4 and 11 (except header)
+    if (rowNumber !== 1 && colNumber === 4) {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF000000' },
+      };
+    }
+    if (rowNumber !== 1 && colNumber === 11) {
       cell.fill = {
         type: 'pattern',
         pattern: 'solid',
@@ -592,7 +650,7 @@ dataSheet.eachRow((row, rowNumber) => {
     }
 
     // Light gray-blue fill in column 12 if empty
-    if (rowNumber !== 1 && colNumber === 12 && (!cell.value || cell.value === '')) {
+    if (rowNumber !== 1 && colNumber === 13 && (!cell.value || cell.value === '')) {
       cell.fill = {
         type: 'pattern',
         pattern: 'solid',
@@ -640,8 +698,8 @@ function generateSuccessReport(successReport) {
     const errorPercent = (successReport.errors/successReport.totalChemicals) * 100
 
     richRuns.push(
-        { text: 'Summary and Success Report\n', font: { bold: true, underline: true } },
-        { text: 'Date:\n' },
+        { text: 'Summary and Success Report\n', font: { bold: true, size: 16, underline: true } },
+        { text: '\nDate:\n' },
         { text: String(successReport.runDate), font: { bold: true, underline: true } },
         { text: '\n_______________________________\n' },
         { text: 'Runtime:\n' },

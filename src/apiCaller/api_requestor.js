@@ -47,5 +47,3 @@ export async function fetchFromPubChem(searchQuery) {
         return null;
     }
 }
-
-fetchFromPubChem('90-15-3')
