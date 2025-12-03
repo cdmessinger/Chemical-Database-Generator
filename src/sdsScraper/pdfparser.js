@@ -167,139 +167,20 @@ export function pdfParse(chemicalData, textPath) {
 			}
 
 			//attempt to map hazards to actual H Code statements
-			const returnedHazards = findHCodes(uniqueHazards);
+			const { allHazardStatements, allPictograms, allPictogramCodes } =
+				findHCodes(uniqueHazards);
 
-			sdsData.sdsHazardStatements = returnedHazards.length
-				? returnedHazards
-				: 'No valid hazard statements found';
+			sdsData.sdsHazardStatements = allHazardStatements;
+			sdsData.sdsPictograms = allPictograms;
+			sdsData.sdsPictogramCodes = allPictogramCodes;
 		} else {
 			sdsData.sdsHazardStatements = 'Hazard Statements not found';
+			sdsData.sdsPictograms = 'Pictograms not found';
+			sdsData.sdsPictogramCodes = 'Pictogram codes not found';
+
 			sdsData.errorCode.push(
-				'"Error: could not retrieve Hazard Statements from SDS"',
+				'"Error: could not retrieve Hazard Statements or pictograms from SDS"',
 			);
-		}
-
-		//pictograms
-		const keywordToPictogram = {
-			//Acute Toxicity
-			toxic: 'Acute Toxicity',
-			toxicity: 'Acute Toxicity',
-			acute: 'Acute Toxicity',
-			fatal: 'Acute Toxicity',
-			poison: 'Acute Toxicity',
-			organs: 'Acute Toxicity',
-			//Corrosive
-			corrosive: 'Corrosive',
-			corrosion: 'Corrosive',
-			acid: 'Corrosive',
-			base: 'Corrosive',
-			//Irritant
-			irritant: 'Irritant',
-			irritation: 'Irritant',
-			sensitivity: 'Irritant',
-			allergic: 'Irritant',
-			//Flammable
-			flammable: 'Flammable',
-			flame: 'Flammable',
-			combustible: 'Flammable',
-			combustion: 'Flammable',
-			combust: 'Flammable',
-			ignite: 'Flammable',
-			ignitable: 'Flammable',
-			//Oxidizer
-			oxidizing: 'Oxidizer',
-			oxidizer: 'Oxidizer',
-			//Health Hazard
-			health: 'Health Hazard',
-			'health hazard': 'Health Hazard',
-			healthhazard: 'Health Hazard',
-			carcinogenic: 'Health Hazard',
-			carcinogen: 'Health Hazard',
-			cancer: 'Health Hazard',
-			mutagenic: 'Health Hazard',
-			mutagen: 'Health Hazard',
-			reproductive: 'Health Hazard',
-			'target organ': 'Health Hazard',
-			targetorgan: 'Health Hazard',
-			//Environmental
-			aquatic: 'Environmental',
-			environmental: 'Environmental',
-			environment: 'Environmental',
-			marine: 'Environmental',
-			water: 'Environmental',
-			ecosystem: 'Environmental',
-			//Gas
-			gas: 'Gas',
-			compressed: 'Gas',
-			compress: 'Gas',
-			pressure: 'Gas',
-			pressurized: 'Gas',
-			//Explosive
-			explosive: 'Explosive',
-			explosion: 'Explosive',
-			explode: 'Explosive',
-			reactive: 'Explosive',
-		};
-
-		const pictogramSet = new Set();
-
-		for (const hazard of sdsData.sdsHazardStatements) {
-			console.log(hazard);
-			const lowerCaseHaz = hazard.toLowerCase();
-
-			for (const [keyword, pictogram] of Object.entries(
-				keywordToPictogram,
-			)) {
-				if (lowerCaseHaz.includes(keyword)) {
-					pictogramSet.add(pictogram);
-				}
-			}
-		}
-
-		const finalPictograms = [...pictogramSet];
-		if (finalPictograms.length === 0) {
-			sdsData.errorCode.push(
-				'Error, could not identify pictograms from SDS hazard statements',
-			);
-		} else {
-			sdsData.sdsPictograms = finalPictograms;
-			//setting pictogram codes for exporting (Uses GHS codes)
-			const pictogramCodes = [];
-			for (let i = 0; i < finalPictograms.length; i++) {
-				const currPictogram = finalPictograms[i].toLowerCase().trim();
-				if (currPictogram.includes('acute')) {
-					pictogramCodes.push('AC');
-				} else if (currPictogram.includes('corrosive')) {
-					pictogramCodes.push('CO');
-				} else if (currPictogram.includes('explosive')) {
-					pictogramCodes.push('EX');
-				} else if (currPictogram.includes('gas')) {
-					pictogramCodes.push('GA');
-				} else if (currPictogram.includes('oxidizer')) {
-					pictogramCodes.push('OX');
-				} else if (
-					currPictogram.includes('carcinogen') ||
-					currPictogram.includes('health hazard')
-				) {
-					pictogramCodes.push('CA');
-				} else if (currPictogram.includes('environmental')) {
-					pictogramCodes.push('EN');
-				} else if (currPictogram.includes('flammable')) {
-					pictogramCodes.push('FL');
-				} else if (currPictogram.includes('irritant')) {
-					pictogramCodes.push('IR');
-				} else
-					errorStatements.push(
-						'Error: could not identify one or more pictogram codes',
-					);
-			}
-			if (pictogramCodes.length === 0) {
-				errorStatements.push(
-					'SDS parsing error: Pictograms could not be converted to Codes',
-				);
-			} else {
-				sdsData.sdsPictogramCodes = pictogramCodes;
-			}
 		}
 
 		//Grab Storage Notes
