@@ -60,7 +60,7 @@ export function cleanHazardBlock(text) {
 		.split(/Precautionary/i)[0]
 		.replace(/\+?\d[\d\s\-()]{6,}\d/g, '')
 		.replace(
-			/(\b(?:Causes|May(?:\s+cause|\s+form)?|Harmful|Fatal|Toxic|Flammable|H\d{3})\b|\()/gi,
+			/(\b(?:Causes|May(?:\s+cause|\s+form)?|Harmful|Fatal|Toxic|Flammable|Combustible|Acute|Skin|Serious|Specific|Extremely|Highly|Reacts|Finely|Explosive|Unstable|Fine|Pressurized|Heating|Catches|Self-Heating|In|Contains|Chemical|Suspected|Very|Harms|Static|Rapid|Causes|H\d{3})\b|\()/g,
 			'\n$1',
 		) // insert line break first
 		// .replace(/^\s*\(\s*$/gm, "")        // NEW: remove standalone "(" lines
@@ -70,7 +70,7 @@ export function cleanHazardBlock(text) {
 		.trim();
 
 	const HAZARD_STARTERS =
-		/^(H\d{3}|Causes|May(?:\s+cause|\s+form)?|Harmful|Fatal|Toxic|Flammable)\b/i;
+		/^(H\d{3}|Causes|May(?:\s+cause|\s+form)?|Harmful|Fatal|Toxic|Flammable|Combustible|Acute|Skin|Serious|Specific|Extremely|Highly|Reacts|Finely|Explosive|Unstable|Fine|Pressurized|Heating|Catches|Self-Heating|In|Contains|Chemical|Suspected|Very|Harms|Static|Rapid|Causes)\b/;
 
 	let cleanedHazardBlock = cleanedText
 		.split('\n')
@@ -85,16 +85,7 @@ export function cleanHazardBlock(text) {
 			L = L.replace(/^\($/, ''); // ✅ remove line that is EXACTLY "("
 			L = L.replace(/\($/, ''); // ✅ remove trailing "("
 
-			return L.replace(/\bAcute(\s+oral)?\s+toxicity\b/gi, '')
-				.replace(/\bSpecific target organ toxicity[^\n]*/gi, '')
-				.replace(/\bSkin\s+Corrosion\/Irritation\b/gi, '')
-				.replace(/\bSerious\s+Eye\s+Damage\/Eye\s+Irritation\b/gi, '')
-				.replace(/\bTarget organs?[^\n]*/gi, '')
-				.replace(
-					/\s*\(?\s*Combustible\s+dust\s*[:\-–—]?\s*Yes\s*\)?\s*$/i,
-					'',
-				)
-				.replace(/\s{2,}/g, ' ') // collapse double spaces left behind
+			return L.replace(/\s{2,}/g, ' ') // collapse double spaces left behind
 				.trim();
 		})
 		.filter(Boolean)
@@ -133,12 +124,6 @@ const filteredWords = [
 	'NJ 07410',
 	'(201) 796-7100',
 	'Acros Organics',
-	'Skin Sensitization',
-	'Category 1',
-	'Category 2',
-	'Category 3',
-	'Category 4',
-	'Category 0',
 	'Thermo Chemicals',
 	'For more information',
 	'For information US',
@@ -179,5 +164,5 @@ function buildBlacklistRegex(phrases) {
 }
 
 function escapeRegex(str) {
-	return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	return str.replace(/[.*+?^${}|[\]\\]/g, '\\$&');
 }

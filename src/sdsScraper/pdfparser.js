@@ -118,28 +118,7 @@ export function pdfParse(chemicalData, textPath) {
 			);
 		}
 
-		//Grab Signal Word
-		const signalWord = cleanedText.match(
-			/Signal Word[:\s]*([\s\S]*?)(?=Hazard)/i,
-		);
-		if (signalWord && signalWord[1]) {
-			if (signalWord[1].includes('Danger')) {
-				sdsData.sdsSignalWord = 'Danger';
-			} else if (signalWord[1].includes('Warning')) {
-				sdsData.sdsSignalWord = 'Warning';
-			} else {
-				sdsData.sdsSignalWord = 'Not Found';
-			}
-		} else {
-			sdsData.sdsSignalWord =
-				'Signal word not found - nothing found from PDF';
-			sdsData.errorCode.push(
-				'Error: could not retrieve Signal Word from SDS, might not exist',
-			);
-		}
-
 		//Grab Hazard Statements and separate them for csv exporter later
-
 		let unfilteredHazards = cleanedText.match(
 			/<<<SECTION_2_START>>>([\s\S]*?)<<<SECTION_3_START>>>/,
 		);
@@ -147,10 +126,13 @@ export function pdfParse(chemicalData, textPath) {
 		if (unfilteredHazards && unfilteredHazards[1]) {
 			let hazardBlock = unfilteredHazards[1];
 
+			console.log('HAZARD BLOCK UNFLITERED: ', hazardBlock);
+
 			const cleanedHazardBlock = cleanHazardBlock(hazardBlock);
 			const hazardArray = cleanedHazardBlock.split('\n');
 
-			// normalize for dedupe — remove plural "s" at end of words like "solid/solids"
+			console.log('HAZARD ARRAY: ', hazardArray);
+
 			const uniqueHazards = [];
 			const seen = new Set();
 
@@ -167,21 +149,47 @@ export function pdfParse(chemicalData, textPath) {
 			}
 
 			//attempt to map hazards to actual H Code statements
-			const { allHazardStatements, allPictograms, allPictogramCodes } =
-				findHCodes(uniqueHazards);
+			const {
+				allHazardStatements,
+				allPictograms,
+				allPictogramCodes,
+				signalWord,
+			} = findHCodes(uniqueHazards);
 
 			sdsData.sdsHazardStatements = allHazardStatements;
 			sdsData.sdsPictograms = allPictograms;
 			sdsData.sdsPictogramCodes = allPictogramCodes;
+			sdsData.sdsSignalWord = signalWord;
 		} else {
 			sdsData.sdsHazardStatements = 'Hazard Statements not found';
 			sdsData.sdsPictograms = 'Pictograms not found';
 			sdsData.sdsPictogramCodes = 'Pictogram codes not found';
+			sdsData.sdsSignalWord = 'Signal Word could not be found';
 
 			sdsData.errorCode.push(
 				'"Error: could not retrieve Hazard Statements or pictograms from SDS"',
 			);
 		}
+
+		// //Grab Signal Word
+		// const signalWord = cleanedText.match(
+		// 	/Signal Word[:\s]*([\s\S]*?)(?=Hazard)/i,
+		// );
+		// if (signalWord && signalWord[1]) {
+		// 	if (signalWord[1].includes('Danger')) {
+		// 		sdsData.sdsSignalWord = 'Danger';
+		// 	} else if (signalWord[1].includes('Warning')) {
+		// 		sdsData.sdsSignalWord = 'Warning';
+		// 	} else {
+		// 		sdsData.sdsSignalWord = 'Not Found';
+		// 	}
+		// } else {
+		// 	sdsData.sdsSignalWord =
+		// 		'Signal word not found - nothing found from PDF';
+		// 	sdsData.errorCode.push(
+		// 		'Error: could not retrieve Signal Word from SDS, might not exist',
+		// 	);
+		// }
 
 		//Grab Storage Notes
 		let storageMatch = cleanedText.match(
@@ -198,17 +206,6 @@ export function pdfParse(chemicalData, textPath) {
 			sdsData.sdsStorageNotes = '';
 			sdsData.errorCode.push('Error: No Storage Notes Found from SDS');
 		}
-
-		//No longer grabbing this, leaving for now.
-		// //Grab Class
-		//     const dotClass = cleanedText.match(/Hazard\s*Class[:\s]*([^\s]+)/i);
-		//     if (dotClass && dotClass[1]) {
-		//         sdsData.class = dotClass[1].trim();
-		//     }
-		//     else {
-		//         sdsData.class = 'Hazard Class not found';
-		//         sdsData.errorCode.push("Error: could not retrieve Hazard Class from SDS");
-		//     }
 
 		//Grab molecular formula
 		const molecularFormulaRegex =
@@ -521,6 +518,15 @@ function generateClassification(chemicalData, sdsData) {
 	const metals = /(na|k|mg|ca|fe|cu|zn|al|ba|pb|ag|ni|co|mn|cr)/i;
 
 	const classificationRules = [
+		{
+			test: (n, f) =>
+				/^(Na|K|Fe|Cu|Zn|Al|Mg|Ca|Ag|Au|Pb|Ni|Co|Mn|Cr)$/i.test(f),
+			result: 'Metal (elemental)',
+		},
+		{
+			test: (n, f) => metals.test(f),
+			result: 'Metal-containing compound',
+		},
 		{
 			test: (n, f) => n.includes('acid') || f.startsWith('H'),
 			result: 'Inorganic acid',

@@ -9,7 +9,6 @@ import {
 	sleep,
 	cleanUpText,
 	splitBySections,
-	findHCodes,
 } from '../utils/index.js';
 
 export async function scrapeFisherSDS(chemicalData, page, cookieString) {
@@ -31,7 +30,7 @@ export async function scrapeFisherSDS(chemicalData, page, cookieString) {
 		return Array.from(document.querySelectorAll('a'))
 			.map((a) => a.href)
 			.filter((href) => href && href.toLowerCase().includes('partnumber'))
-			.slice(0, 1); //grab first 5 links on page
+			.slice(0, 5); //grab first 5 links on page
 	});
 
 	//check if we got any sds links, tell us if not

@@ -1,0 +1,106 @@
+{
+	"may form combustible dust in air": [
+		"may",
+		"form",
+		"combustible",
+		"dust",
+		"in",
+		"air"
+	],
+	"may form combustible dust concentrations in air": [
+		"may",
+		"form",
+		"combustible",
+		"dust",
+		"concentrations",
+		"in",
+		"air"
+	],
+	"combustible dust": ["combustible", "dust"],
+	"dust may form explosive mixtures in air": [
+		"dust",
+		"may",
+		"form",
+		"explosive",
+		"mixtures",
+		"in",
+		"air"
+	],
+	"thermal burns": ["thermal", "burns"],
+	"hot vapors may cause burns": ["hot", "vapors", "may", "cause", "burns"],
+	"may cause frostbite": ["may", "cause", "frostbite"],
+	"contact with molten material may cause burns": [
+		"contact",
+		"with",
+		"molten",
+		"material",
+		"may",
+		"cause",
+		"burns"
+	],
+	"may release toxic fumes when heated": [
+		"may",
+		"release",
+		"toxic",
+		"fumes",
+		"when",
+		"heated"
+	],
+	"may cause respiratory irritation when heated": [
+		"may",
+		"cause",
+		"respiratory",
+		"irritation",
+		"when",
+		"heated"
+	],
+	"high pressure gas": ["high", "pressure", "gas"],
+	"rapid release of gas may cause injury": [
+		"rapid",
+		"release",
+		"of",
+		"gas",
+		"may",
+		"cause",
+		"injury"
+	],
+	"may create slippery conditions": [
+		"may",
+		"create",
+		"slippery",
+		"conditions"
+	],
+	"static discharge may ignite vapors": [
+		"static",
+		"discharge",
+		"may",
+		"ignite",
+		"vapors"
+	],
+	"may displace oxygen and cause rapid suffocation": [
+		"may",
+		"displace",
+		"oxygen",
+		"and",
+		"cause",
+		"rapid",
+		"suffocation"
+	],
+	"explosive when dry": ["explosive", "when", "dry"],
+	"reacts violently with water": ["reacts", "violently", "with", "water"],
+	"reacts with water": ["reacts", "with", "water"],
+	"reacts with acids": ["reacts", "with", "acids"],
+	"may form peroxides": ["may", "form", "peroxides"],
+	"may polymerize": ["may", "polymerize"],
+	"may ignite spontaneously": ["may", "ignite", "spontaneously"],
+	"finely dispersed particles may form an explosive mixture": [
+		"finely",
+		"dispersed",
+		"particles",
+		"may",
+		"form",
+		"an",
+		"explosive",
+		"mixture"
+	]
+}

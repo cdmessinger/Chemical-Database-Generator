@@ -48,24 +48,43 @@ export async function importExcel(filepath) {
 	// return rows;
 
 	// quick searching only 1 REMOVE AFTER TESTING
-	const tempVar = rows.slice(11, 14);
+	const tempVar = rows.slice(0, 50);
 	console.log(tempVar);
 	return tempVar;
 }
 
 function separateUnits(value) {
-	const cleanvalue = String(value).replace(/\s+/g, ''); //removes all spaces in value
-	const valueRegex = cleanvalue.match(/^([\d.,eE+-]+)\s*([a-zA-Zμµ%]+)$/);
+	const cleanvalue = String(value).trim(); // keep spaces for splitting
 
-	let quantity = '';
-	let units = '';
-
-	if (valueRegex) {
-		quantity = valueRegex[1];
-		units = valueRegex[2];
-	} else {
+	// split into "numberPart" + "unitPart"
+	const m = cleanvalue.match(/^(.+?)\s*([a-zA-Zμµ%]+)$/);
+	if (!m) {
 		console.log('Error separating units');
-		quantity = value;
+		console.log('Value:', cleanvalue);
+		return { quantity: cleanvalue, units: '' };
 	}
-	return { quantity, units };
+
+	let numberPart = m[1].trim();
+	const units = m[2];
+
+	// 1) mixed number: "1 1/2"
+	let mixed = numberPart.match(/^(\d+)\s+(\d+)\s*\/\s*(\d+)$/);
+	if (mixed) {
+		const whole = Number(mixed[1]);
+		const num = Number(mixed[2]);
+		const den = Number(mixed[3]);
+		return { quantity: String(whole + num / den), units };
+	}
+
+	// 2) simple fraction: "1/2"
+	let fraction = numberPart.match(/^(\d+)\s*\/\s*(\d+)$/);
+	if (fraction) {
+		const num = Number(fraction[1]);
+		const den = Number(fraction[2]);
+		return { quantity: String(num / den), units };
+	}
+
+	// 3) normal numbers (including scientific)
+	numberPart = numberPart.replace(/,/g, ''); // optional: drop thousands separators
+	return { quantity: numberPart, units };
 }
