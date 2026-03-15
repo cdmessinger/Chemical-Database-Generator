@@ -3,7 +3,7 @@ import { exec, path, ExcelJS } from '../utils/index.js';
 export async function exportToExcel(
 	parsedData,
 	filepath = 'chemical_data.xlsx',
-	successReport,
+	dataSummary,
 ) {
 	if (!parsedData || parsedData.length === 0) {
 		console.warn('No data to export');
@@ -13,7 +13,7 @@ export async function exportToExcel(
 	const { workbook, summarySheet, dataSheet, exportSheet } =
 		createWorkbookAndSheets();
 
-	writeSuccessReport(summarySheet, successReport);
+	writedataSummary(summarySheet, dataSummary);
 
 	//write all the data
 	writeDataSheet(dataSheet, parsedData);
@@ -47,8 +47,8 @@ function createWorkbookAndSheets() {
 	return { workbook, summarySheet, dataSheet, exportSheet };
 }
 
-function writeSuccessReport(summarySheet, successReport) {
-	const completed = generateSuccessReport(successReport);
+function writedataSummary(summarySheet, dataSummary) {
+	const completed = generatedataSummary(dataSummary);
 	const row = summarySheet.addRow(['']);
 	row.getCell(1).value = completed;
 	summarySheet.mergeCells(1, 1, 40, 5);
@@ -58,7 +58,7 @@ function writeSuccessReport(summarySheet, successReport) {
 	summarySheet.getCell(1, 7).font = { bold: true };
 	summarySheet.getCell(1, 8).font = { bold: true };
 
-	const badMatches = successReport.badMatches;
+	const badMatches = dataSummary.badMatches;
 	let rowCounter = 2; //start at row 2
 	for (const key in badMatches) {
 		const value = badMatches[key];
@@ -89,25 +89,25 @@ function determineExportables(record) {
 
 	//name
 	if (record.sdsProductName !== 'Product name not found') {
-		record.exportableName = record.sdsProductName;
+		record.exportableName = record.sdsData.data.sdsProductName;
 	} else if (record.pubChemProductName !== 'Product name not found') {
-		record.exportableName = record.pubChemProductName;
+		record.exportableName = record.pubChemData.data.pubChemProductName;
 	} else {
-		record.exportableName = record.importedProductName;
+		record.exportableName = record.name;
 	}
 	//synonyms
 	if (record.sdsSynonyms !== 'Synonyms not found') {
-		record.exportableSyn = record.sdsSynonyms;
+		record.exportableSyn = record.sdsData.data.sdsSynonyms;
 	} else if (record.pubChemSynonyms) {
-		record.exportableSyn = record.pubChemSynonyms;
+		record.exportableSyn = record.pubChemData.data.pubChemSynonyms;
 	} else {
 		record.exportableSyn = 'Missing';
 	}
 	//CAS
 	if (record.sdsCASNumber !== 'CAS Number not found in SDS') {
-		record.exportableCAS = record.sdsCASNumber;
+		record.exportableCAS = record.sdsData.data.sdsCASNumber;
 	} else if (record.searchQuery) {
-		record.exportableCAS = record.searchQuery;
+		record.exportableCAS = record.casNumber;
 	} else {
 		record.exportableCAS = 'Missing';
 	}
@@ -118,23 +118,23 @@ function determineExportables(record) {
 		record.sdsHazardStatements !==
 			'No valid hazard statements found or are not identified for this SDS'
 	) {
-		record.exportableHaz = record.sdsHazardStatements;
+		record.exportableHaz = record.sdsData.data.sdsHazardStatements;
 	} else {
 		record.exportableHaz = 'Missing';
 	}
 	//signal word
 	if (record.sdsSignalWord !== 'Signal word not found') {
-		record.exportableSW = record.sdsSignalWord;
+		record.exportableSW = record.sdsData.data.sdsSignalWord;
 	} else if (record.pubChemSignalWord) {
-		record.exportableSW = record.pubChemSignalWord;
+		record.exportableSW = record.pubChemData.data.pubChemSignalWord;
 	} else {
 		record.exportableSW = 'Missing';
 	}
 	//formula
 	if (record.sdsMolecularFormula !== 'Formula not found') {
-		record.exportableMF = record.sdsMolecularFormula;
+		record.exportableMF = record.sdsData.data.sdsMolecularFormula;
 	} else if (record.pubChemMolecularFormula) {
-		record.exportableMF = record.pubChemMolecularFormula;
+		record.exportableMF = record.pubChemData.data.pubChemMolecularFormula;
 	} else {
 		record.exportableMF = 'Missing';
 	}
@@ -177,9 +177,9 @@ function writeDataSheet(dataSheet, parsedData) {
 		const record = determineExportables(parsedData[i]);
 
 		//row 1
-		dataSheet.getCell(startRow, 1).value = record.importedProductName;
+		dataSheet.getCell(startRow, 1).value = record.name;
 		dataSheet.getCell(startRow, 2).value = 'STATUS CODE:';
-		dataSheet.getCell(startRow, 3).value = record.sdsStatusCode;
+		dataSheet.getCell(startRow, 3).value = record.statusCode;
 		dataSheet.getCell(startRow, 4).value = '----------->';
 		dataSheet.getCell(startRow, 5).value = 'NAME:';
 		dataSheet.getCell(startRow, 6).value = record.exportableName;
@@ -188,26 +188,28 @@ function writeDataSheet(dataSheet, parsedData) {
 			record.exportableHaz,
 		);
 		dataSheet.getCell(startRow, 9).value = 'UNITS';
-		dataSheet.getCell(startRow, 10).value = record.importedUnits;
+		dataSheet.getCell(startRow, 10).value = record.units;
 		dataSheet.getCell(startRow, 11).value = '<-----------';
 		dataSheet.getCell(startRow, 12).value = 'NAME: ';
-		dataSheet.getCell(startRow, 13).value = record.importedProductName;
-		dataSheet.getCell(startRow, 14).value = record.pubChemProductName;
-		dataSheet.getCell(startRow, 15).value = record.sdsProductName;
+		dataSheet.getCell(startRow, 13).value = record.name;
+		dataSheet.getCell(startRow, 14).value =
+			record.pubChemData.data.pubChemProductName;
+		dataSheet.getCell(startRow, 15).value =
+			record.sdsData.data.sdsProductName;
 		dataSheet.getCell(startRow, 16).value = formatCellValue(
-			record.sdsHazardStatements,
+			record.sdsData.data.sdsHazardStatements,
 		);
 		dataSheet.getCell(startRow, 17).value = formatCellValue(
-			record.sdsPictograms,
+			record.sdsData.data.sdsPictograms,
 		);
 		dataSheet.getCell(startRow, 18).value = formatCellValue(
-			record.sdsPictogramCodes,
+			record.sdsData.data.sdsPictogramCodes,
 		);
 
 		//row 2
 		dataSheet.getCell(startRow + 1, 1).value = '';
 		dataSheet.getCell(startRow + 1, 2).value = 'CONFIDENCE SCORE:';
-		dataSheet.getCell(startRow + 1, 3).value = record.sdsConfidenceScore;
+		dataSheet.getCell(startRow + 1, 3).value = record.confidenceScore;
 		dataSheet.getCell(startRow + 1, 4).value = '----------->';
 		dataSheet.getCell(startRow + 1, 5).value = 'SYNONYMS:';
 		dataSheet.getCell(startRow + 1, 6).value = formatCellValue(
@@ -216,14 +218,15 @@ function writeDataSheet(dataSheet, parsedData) {
 		dataSheet.getCell(startRow + 1, 7).value = '';
 		dataSheet.getCell(startRow + 1, 8).value = '';
 		dataSheet.getCell(startRow + 1, 9).value = 'QUANTITY';
-		dataSheet.getCell(startRow + 1, 10).value = record.importedQuantity;
+		dataSheet.getCell(startRow + 1, 10).value = record.quantity;
 		dataSheet.getCell(startRow + 1, 11).value = '<-----------';
 		dataSheet.getCell(startRow + 1, 12).value = 'CAS NO.:';
-		dataSheet.getCell(startRow + 1, 13).value = record.searchQuery;
+		dataSheet.getCell(startRow + 1, 13).value = record.casNumber;
 		dataSheet.getCell(startRow + 1, 14).value = formatCellValue(
-			record.pubChemCASNumbers,
+			record.pubChemData.data.pubChemCASNumbers,
 		);
-		dataSheet.getCell(startRow + 1, 15).value = record.sdsCASNumber;
+		dataSheet.getCell(startRow + 1, 15).value =
+			record.sdsData.data.sdsCASNumber;
 		dataSheet.getCell(startRow + 1, 16).value = '';
 		dataSheet.getCell(startRow + 1, 17).value = '';
 		dataSheet.getCell(startRow + 1, 18).value = '';
@@ -232,31 +235,32 @@ function writeDataSheet(dataSheet, parsedData) {
 		dataSheet.getCell(startRow + 2, 1).value = '';
 		dataSheet.getCell(startRow + 2, 2).value = 'CONF. SCORE INFO:';
 		dataSheet.getCell(startRow + 2, 3).value = formatCellValue(
-			record.sdsConfidenceInfo,
+			record.sdsData.data.sdsConfidenceInfo,
 		);
 		dataSheet.getCell(startRow + 2, 4).value = '----------->';
 		dataSheet.getCell(startRow + 2, 5).value = 'SUPPLIER';
-		dataSheet.getCell(startRow + 2, 6).value = record.importedSupplier;
+		dataSheet.getCell(startRow + 2, 6).value = record.supplier;
 		dataSheet.getCell(startRow + 2, 7).value = 'PICTOGRAM CODES:';
 		dataSheet.getCell(startRow + 2, 8).value =
-			formatCellValue(record.sdsPictogramCodes) || [];
+			formatCellValue(record.sdsData.data.sdsPictogramCodes) || [];
 		dataSheet.getCell(startRow + 2, 9).value = 'STORAGE NOTES';
-		dataSheet.getCell(startRow + 2, 10).value = record.sdsStorageNotes;
+		dataSheet.getCell(startRow + 2, 10).value =
+			record.sdsData.data.sdsStorageNotes;
 		dataSheet.getCell(startRow + 2, 11).value = '<-----------';
 		dataSheet.getCell(startRow + 2, 12).value = 'SYNONYMS:';
 		dataSheet.getCell(startRow + 2, 13).value = '';
 		dataSheet.getCell(startRow + 2, 14).value = formatCellValue(
-			record.pubChemSynonyms,
+			record.pubChemData.data.pubChemSynonyms,
 		);
 		dataSheet.getCell(startRow + 2, 15).value = formatCellValue(
-			record.sdsSynonyms,
+			record.sdsData.data.sdsSynonyms,
 		);
 		dataSheet.getCell(startRow + 2, 16).value = '';
 		dataSheet.getCell(startRow + 2, 17).value = '';
 		dataSheet.getCell(startRow + 2, 18).value = '';
 
 		//row 4
-		dataSheet.getCell(startRow + 3, 1).value = record.searchQuery;
+		dataSheet.getCell(startRow + 3, 1).value = record.casNumber;
 		dataSheet.getCell(startRow + 3, 2).value = '';
 		dataSheet.getCell(startRow + 3, 3).value = '';
 		dataSheet.getCell(startRow + 3, 4).value = '----------->';
@@ -264,8 +268,8 @@ function writeDataSheet(dataSheet, parsedData) {
 		dataSheet.getCell(startRow + 3, 6).value = record.exportableCAS;
 		dataSheet.getCell(startRow + 3, 7).value = 'SDS LINK:';
 		dataSheet.getCell(startRow + 3, 8).value = {
-			text: record.sdsLink,
-			hyperlink: record.sdsLink,
+			text: record.linkToSDS,
+			hyperlink: record.linkToSDS,
 		};
 		//make it look like a hyperlink
 		dataSheet.getCell(startRow + 3, 8).font = {
@@ -279,16 +283,17 @@ function writeDataSheet(dataSheet, parsedData) {
 		dataSheet.getCell(startRow + 3, 12).value = 'FORMULA:';
 		dataSheet.getCell(startRow + 3, 13).value = '';
 		dataSheet.getCell(startRow + 3, 14).value =
-			record.pubChemMolecularFormula;
-		dataSheet.getCell(startRow + 3, 15).value = record.sdsMolecularFormula;
+			record.pubChemData.data.pubChemMolecularFormula;
+		dataSheet.getCell(startRow + 3, 15).value =
+			record.sdsData.data.sdsMolecularFormula;
 		dataSheet.getCell(startRow + 3, 16).value = formatCellValue(
-			record.pubChemHazardStatements,
+			record.pubChemData.data.pubChemHazardStatements,
 		);
 		dataSheet.getCell(startRow + 3, 17).value = formatCellValue(
-			record.pubChemPictograms,
+			record.pubChemData.data.pubChemPictograms,
 		);
 		dataSheet.getCell(startRow + 3, 18).value = formatCellValue(
-			record.pubChemPictogramCodes,
+			record.pubChemData.data.pubChemPictogramCodes,
 		);
 
 		//row 5
@@ -297,17 +302,19 @@ function writeDataSheet(dataSheet, parsedData) {
 		dataSheet.getCell(startRow + 4, 3).value = '';
 		dataSheet.getCell(startRow + 4, 4).value = '----------->';
 		dataSheet.getCell(startRow + 4, 5).value = 'CLASS:';
-		dataSheet.getCell(startRow + 4, 6).value = record.classification;
+		dataSheet.getCell(startRow + 4, 6).value =
+			record.sdsData.data.sdsClassification;
 		dataSheet.getCell(startRow + 4, 7).value = 'LOCATION:';
-		dataSheet.getCell(startRow + 4, 8).value = record.importedLocation;
+		dataSheet.getCell(startRow + 4, 8).value = record.roomNumber;
 		dataSheet.getCell(startRow + 4, 9).value = 'FORMULA';
 		dataSheet.getCell(startRow + 4, 10).value = record.exportableMF;
 		dataSheet.getCell(startRow + 4, 11).value = '<-----------';
 		dataSheet.getCell(startRow + 4, 12).value = 'MW:';
 		dataSheet.getCell(startRow + 4, 13).value = '';
 		dataSheet.getCell(startRow + 4, 14).value =
-			record.pubChemMolecularWeight;
-		dataSheet.getCell(startRow + 4, 15).value = record.sdsMolecularWeight;
+			record.pubChemData.data.pubChemMolecularWeight;
+		dataSheet.getCell(startRow + 4, 15).value =
+			record.sdsData.data.sdsMolecularWeight;
 		dataSheet.getCell(startRow + 4, 16).value = '';
 		dataSheet.getCell(startRow + 4, 17).value = '';
 		dataSheet.getCell(startRow + 4, 18).value = '';
@@ -321,14 +328,17 @@ function writeDataSheet(dataSheet, parsedData) {
 		dataSheet.getCell(startRow + 5, 5).value = 'SIGNAL WORD:';
 		dataSheet.getCell(startRow + 5, 6).value = record.exportableSW;
 		dataSheet.getCell(startRow + 5, 7).value = 'SHELF:';
-		dataSheet.getCell(startRow + 5, 8).value = record.importedCabinet;
+		dataSheet.getCell(startRow + 5, 8).value = record.cabinet;
 		dataSheet.getCell(startRow + 5, 9).value = 'SDS REV. DATE:';
-		dataSheet.getCell(startRow + 5, 10).value = record.sdsRevisionDate;
+		dataSheet.getCell(startRow + 5, 10).value =
+			record.sdsData.data.sdsRevisionDate;
 		dataSheet.getCell(startRow + 5, 11).value = '<-----------';
 		dataSheet.getCell(startRow + 5, 12).value = 'SIGNAL WORD:';
 		dataSheet.getCell(startRow + 5, 13).value = '';
-		dataSheet.getCell(startRow + 5, 14).value = record.pubChemSignalWord;
-		dataSheet.getCell(startRow + 5, 15).value = record.sdsSignalWord;
+		dataSheet.getCell(startRow + 5, 14).value =
+			record.pubChemData.data.pubChemSignalWord;
+		dataSheet.getCell(startRow + 5, 15).value =
+			record.sdsData.data.sdsSignalWord;
 		dataSheet.getCell(startRow + 5, 16).value = '';
 		dataSheet.getCell(startRow + 5, 17).value = '';
 		dataSheet.getCell(startRow + 5, 18).value = '';
@@ -402,9 +412,12 @@ function confidenceScoreFormating(dataSheet, startRow) {
 		}
 	}
 
-	if (targetCell >= 85) color = '28e482'; // green, extremely confident
-	else if (targetCell >= 70) color = '9fcf74'; // yellow-green, pass
-	else if (targetCell >= 40) color = 'fdf381'; // yellow, needs review
+	if (targetCell >= 85)
+		color = '28e482'; // green, extremely confident
+	else if (targetCell >= 70)
+		color = '9fcf74'; // yellow-green, pass
+	else if (targetCell >= 40)
+		color = 'fdf381'; // yellow, needs review
 	else color = 'da5d4c'; // red, fail
 
 	for (let i = startRow; i < endRow; i++) {
@@ -858,22 +871,31 @@ function generateSummary(record) {
 		{ text: 'Name Comparison\n', font: { bold: true } },
 		{ text: 'Inventory: ' },
 		{
-			text: String(record.knownProductName || 'N/A'),
+			text: String(record.name || 'N/A'),
 			font: { bold: true },
 		},
 		{ text: '\nSDS: ' },
-		{ text: String(record.sdsProductName || 'N/A'), font: { bold: true } },
+		{
+			text: String(record.sdsData.data.sdsProductName || 'N/A'),
+			font: { bold: true },
+		},
 		{ text: '\nPubChem: ' },
-		{ text: String(record.pubChemName || 'N/A'), font: { bold: true } },
+		{
+			text: String(record.pubChemData.data.pubChemName || 'N/A'),
+			font: { bold: true },
+		},
 		{ text: '\n────────────────────\n' },
 		{ text: 'CAS Comparison\n', font: { bold: true } },
 		{ text: 'Inventory: ' },
-		{ text: String(record.searchQuery || 'N/A'), font: { bold: true } },
+		{ text: String(record.casNumber || 'N/A'), font: { bold: true } },
 		{ text: '\nSDS: ' },
-		{ text: String(record.sdsCASNumber || 'N/A'), font: { bold: true } },
+		{
+			text: String(record.sdsData.data.sdsCASNumber || 'N/A'),
+			font: { bold: true },
+		},
 		{ text: '\nPubChem: ' },
 		{
-			text: String(record.pubChemCASNumber || 'N/A'),
+			text: String(record.pubChemData.data.pubChemCASNumber || 'N/A'),
 			font: { bold: true },
 		},
 	);
@@ -884,17 +906,17 @@ function generateSummary(record) {
 	return { richText: cleaned };
 }
 
-function generateSuccessReport(successReport) {
+function generatedataSummary(dataSummary) {
 	const richRuns = [];
 
 	const successPercent =
-		(successReport.passedSDS / successReport.totalChemicals) * 100;
+		(dataSummary.passedSDS / dataSummary.totalChemicals) * 100;
 	const reviewPercent =
-		(successReport.reviewSDS / successReport.totalChemicals) * 100;
+		(dataSummary.reviewSDS / dataSummary.totalChemicals) * 100;
 	const failedPercent =
-		(successReport.failedSDS / successReport.totalChemicals) * 100;
+		(dataSummary.failedSDS / dataSummary.totalChemicals) * 100;
 	const errorPercent =
-		(successReport.errors / successReport.totalChemicals) * 100;
+		(dataSummary.errors / dataSummary.totalChemicals) * 100;
 
 	richRuns.push(
 		{
@@ -903,26 +925,26 @@ function generateSuccessReport(successReport) {
 		},
 		{ text: '\nDate:\n' },
 		{
-			text: String(successReport.runDate),
+			text: String(dataSummary.runDate),
 			font: { bold: true, underline: true },
 		},
 		{ text: '\n_______________________________\n' },
 		{ text: 'Runtime:\n' },
 		{
-			text: String(successReport.runTime),
+			text: String(dataSummary.runTime),
 			font: { bold: true, underline: true },
 		},
 		{ text: '\n_______________________________\n' },
 		{ text: 'Total Chemicals ran:\n' },
 		{
-			text: String(successReport.totalChemicals),
+			text: String(dataSummary.totalChemicals),
 			font: { bold: true, underline: true },
 		},
 		{ text: '\n_______________________________\n' },
 		{ text: 'Successful SDS Sheets' },
 		{ text: '\nTotal: ', font: { bold: true, underline: true } },
 		{
-			text: String(successReport.passedSDS),
+			text: String(dataSummary.passedSDS),
 			font: { bold: true, underline: true },
 		},
 		{ text: '\nPercentage: ', font: { bold: true, underline: true } },
@@ -932,7 +954,7 @@ function generateSuccessReport(successReport) {
 		{ text: 'SDS Sheets that need review' },
 		{ text: '\nTotal: ', font: { bold: true, underline: true } },
 		{
-			text: String(successReport.reviewSDS),
+			text: String(dataSummary.reviewSDS),
 			font: { bold: true, underline: true },
 		},
 		{ text: '\nPercentage: ', font: { bold: true, underline: true } },
@@ -942,7 +964,7 @@ function generateSuccessReport(successReport) {
 		{ text: 'Failed SDS Sheets' },
 		{ text: '\nTotal: ', font: { bold: true, underline: true } },
 		{
-			text: String(successReport.failedSDS),
+			text: String(dataSummary.failedSDS),
 			font: { bold: true, underline: true },
 		},
 		{ text: '\nPercentage: ', font: { bold: true, underline: true } },
@@ -952,7 +974,7 @@ function generateSuccessReport(successReport) {
 		{ text: 'Errors encountered' },
 		{ text: '\nTotal: ', font: { bold: true, underline: true } },
 		{
-			text: String(successReport.errors),
+			text: String(dataSummary.errors),
 			font: { bold: true, underline: true },
 		},
 		{ text: '\nPercentage: ', font: { bold: true, underline: true } },

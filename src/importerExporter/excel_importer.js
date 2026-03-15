@@ -3,7 +3,7 @@ import { ExcelJS } from '../utils/index.js';
 const headerKey = {
 	'Chemical Name': 'importedProductName',
 	Supplier: 'importedSupplier',
-	'CAS #': 'searchQuery',
+	'CAS #': 'importedCasNumber',
 	'Quantity (Container Size)': 'importedQuantity',
 	'Location (Room)': 'importedLocation',
 	Cabinet: 'importedCabinet',
@@ -23,7 +23,7 @@ export async function importExcel(filepath) {
 		row.eachCell((cell, colNumber) => {
 			const header = sheet.getRow(1).getCell(colNumber).value;
 			const key = headerKey[header];
-			let value = cell.value;
+			let value = getCellText(cell.value);
 			if (value) {
 				if (
 					header === 'Quantity (Container Size)' ||
@@ -47,9 +47,8 @@ export async function importExcel(filepath) {
 
 	// return rows;
 
-	// quick searching only 1 REMOVE AFTER TESTING
-	const tempVar = rows.slice(0, 50);
-	console.log(tempVar);
+	// // FOR TESTING only
+	const tempVar = rows.slice(0, 5);
 	return tempVar;
 }
 
@@ -87,4 +86,17 @@ function separateUnits(value) {
 	// 3) normal numbers (including scientific)
 	numberPart = numberPart.replace(/,/g, ''); // optional: drop thousands separators
 	return { quantity: numberPart, units };
+}
+
+//protects against weird formating with richText when importing from excel
+function getCellText(value) {
+	if (!value) return '';
+
+	if (typeof value === 'string') return value;
+
+	if (value.richText) {
+		return value.richText.map((t) => t.text).join('');
+	}
+
+	return String(value);
 }

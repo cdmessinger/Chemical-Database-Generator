@@ -1,285 +1,60 @@
-import {
-	puppeteer,
-	fsp,
-	path,
-	sleep,
-	importExcel,
-	exportToExcel,
-	scrapeFisherSDS,
-	parsePubChemData,
-	fetchFromPubChem,
-	buildChemicalData,
-} from '../utils/index.js';
+import { fsp, path, importExcel, exportToExcel } from '../utils/index.js';
+import { run } from '../../../../SDS-Scraper/core/run.js';
 
-export async function run(filePath) {
-	//runtime
-	const start = Date.now();
-
-	const allRecords = []; //all data export
+export async function generateChemicalInfo(filePath) {
 	const firstCell = 2; // for tracking cell number in "badMatches" for success report, we multiple index by 7 and add this
-	let lastData = {}; //stores last data to check for duplicates
-	let lastErrors = {}; //stores last errors for duplicates
 
 	//Import our data from excel sheet
-	const chemicalList = await importExcel(filePath);
+	const importedList = await importExcel(filePath);
 
-	if (!chemicalList) {
+	if (!importedList) {
 		throw new Error('Error: could not import chemical Data');
 	}
 
-	//QA stuff
-	const totalChemicals = chemicalList.length;
-	const successReport = {
-		totalChemicals,
-		badMatches: {}, //for labeling each mismatched chemical w/ row number in excel export
-		passedSDS: 0,
-		reviewSDS: 0,
-		failedSDS: 0,
-		errors: 0,
-	};
+	const chemicalList = [];
 
-	console.log('==============================');
-	console.log(`Successfully imported ${totalChemicals} chemical(s)`);
-	console.log('==============================');
+	for (let i = 0; i < importedList.length; i++) {
+		const chemicalData = {};
 
-	//start the websession in puppeteer
-	const { browser, page, cookieString } = await openBrowser();
+		console.log(importedList[i]);
 
-	//Start running chemical searches
-	for (let i = 0; i < totalChemicals; i++) {
-		const searchQuery = chemicalList[i].searchQuery; //CAS number, what we use to search everything, if you migrate this to biology, you'll likely need to fit this based on catalogue number
-		let chemicalData = {};
-		const errorStatements = [];
+		chemicalData.name = importedList[i].importedProductName;
+		chemicalData.casNumber = importedList[i].importedCasNumber;
 
-		//Add known information to our chemicalData object and return it.
-		chemicalData = buildChemicalData(chemicalData, chemicalList[i]);
-
-		try {
-			//check is last CAS is a duplicate, if so, we copy the data to save memory and time
-			if (lastData.searchQuery && searchQuery === lastData.searchQuery) {
-				console.log(
-					'Current CAS matches the previous one, skipping lookup & copying data',
-				);
-				chemicalData = buildChemicalData(chemicalData, lastData);
-				chemicalData.errorStatements = lastErrors;
-
-				//update total validation numbers
-				if (chemicalData.sdsConfidenceScore >= 70) {
-					successReport.passedSDS += 1;
-				} else if (chemicalData.sdsConfidenceScore < 40) {
-					successReport.failedSDS += 1;
-					const cellIndex = i * 7 + firstCell;
-					successReport.badMatches[cellIndex] =
-						chemicalData.importedProductName;
-				} else {
-					successReport.reviewSDS += 1;
-					const cellIndex = i * 7 + firstCell;
-					successReport.badMatches[cellIndex] =
-						chemicalData.importedProductName;
-				}
-
-				if (chemicalData.errorStatements.length !== 0) {
-					successReport.errors += 1;
-				}
-
-				allRecords.push(chemicalData);
-				const clonedData = structuredClone(chemicalData);
-				lastData = clonedData;
-				continue;
-			} else {
-				//Normal functionality
-				console.log(`Request ${i}, ${searchQuery}`);
-				console.log(`Fetching PubChem data for ${searchQuery}...`);
-
-				//Call PubChem API
-				const apiRawData = await fetchFromPubChem(searchQuery);
-
-				if (!apiRawData) {
-					console.warn(
-						`Pubchem Error: ${searchQuery} — no data returned from API.`,
-					);
-					errorStatements.push(
-						`Pubchem Error: ${searchQuery} — no data returned from API.`,
-					);
-					continue; //skipping Pubchem data, continuing to scrape fisher SDS
-				} else {
-					console.log('Data retrieved from API', apiRawData);
-					//Add 1st part of API Data to our chemicalData object
-					chemicalData = buildChemicalData(chemicalData, apiRawData);
-				}
-
-				//Parse and extract API response from PubChem
-				console.log(`Parsing data for ${searchQuery}...`);
-				const parsedData = await parsePubChemData(apiRawData);
-
-				if (!parsedData) {
-					console.warn(
-						`Pubchem Error: ${searchQuery} — could not parse API data.`,
-					);
-					errorStatements.push(
-						`Pubchem Error: ${searchQuery} — could not parse API data.`,
-					);
-				} else {
-					console.log(`Parsed data for ${searchQuery}`);
-					//Add our 2nd part of Pubchem API data to our object
-					chemicalData = buildChemicalData(chemicalData, parsedData);
-
-					//Add any error statements
-					if (parsedData?.errorStatements?.length) {
-						for (const error of parsedData.errorStatements) {
-							errorStatements.push(error);
-						}
-					}
-				}
-
-				//Scrape FisherSci website for SDS sheets and parse their data. SDS validation also occurs here.
-				const sdsData = await scrapeFisherSDS(
-					chemicalData,
-					page,
-					cookieString,
-				);
-
-				//add SDS Data and Validation Data to our chemicalData object
-				chemicalData = buildChemicalData(chemicalData, sdsData);
-
-				if (sdsData?.errorCode?.length) {
-					for (const error of sdsData.errorCode) {
-						errorStatements.push(error);
-					}
-				}
-
-				//update total validation numbers
-				if (chemicalData.sdsConfidenceScore >= 70) {
-					successReport.passedSDS += 1;
-				} else if (chemicalData.sdsConfidenceScore < 40) {
-					successReport.failedSDS += 1;
-					const cellIndex = i * 7 + firstCell;
-					successReport.badMatches[cellIndex] =
-						chemicalData.importedProductName;
-				} else {
-					successReport.reviewSDS += 1;
-					const cellIndex = i * 7 + firstCell;
-					successReport.badMatches[cellIndex] =
-						chemicalData.importedProductName;
-				}
-
-				//Add error statements to chemicalData
-				chemicalData.errorStatements = errorStatements;
-				console.log('Finished Chemical Data Object:', chemicalData);
-
-				//add count if errors are encountered
-				if (chemicalData.errorStatements.length !== 0) {
-					successReport.errors += 1;
-				}
-
-				//add the data to our records
-				allRecords.push(chemicalData);
-
-				console.log('==============================');
-				console.log(`Chemical ${i + 1} / ${totalChemicals} completed.`);
-				console.log('==============================');
-
-				//Call sleep function to limit API requests, unless on the last index.
-				if (i !== chemicalList.length - 1) {
-					await sleep();
-				}
-
-				lastData = chemicalData; //set lastData to check for duplicates and save time
-				lastErrors = errorStatements; //saves error statements incase of duplicates
-			}
-		} catch (err) {
-			console.error(
-				`Unexpected error processing ${searchQuery}: ${err.message}`,
-			);
-			errorStatements.push(
-				`Unexpected error processing ${searchQuery}: ${err.message}`,
-			);
-		}
+		chemicalList.push(chemicalData);
 	}
 
-	//Close Puppeteer at the end of the session
-	await closeBrowser(browser);
+	console.log(chemicalList);
 
-	//Generate success report
-	console.log('==============================');
-	console.log('TOTAL SUMMARY:');
-	console.log('TOTAL CHEMICALS SEARCHED:', successReport.totalChemicals);
-	console.log('PASSED SDS:', successReport.passedSDS);
-	console.log('SDS NEEDS REVIEW:', successReport.reviewSDS);
-	console.log('FAILED SDS:', successReport.failedSDS);
-	console.log('ERRORS ENCOUNTERED: ', successReport.errors);
-	console.log('==============================');
+	//run SDS-Scraper
+	const { allRecords, dataSummary } = await run(chemicalList);
 
-	//end runtime
-	const end = Date.now();
-	let runTime = '';
-	const totalSeconds = (end - start) / 1000;
-	const minutes = Math.floor(totalSeconds / 60);
-	const seconds = (totalSeconds % 60).toFixed(1);
-	if (minutes !== 0) {
-		runTime = `${minutes}minutes, ${seconds}seconds.`;
-	} else {
-		runTime = `${seconds} seconds.`;
-	}
+	console.log('Data Summary:', dataSummary);
 
-	successReport.runTime = runTime;
+	//readd our imported values:
+	const fullData = addImportedData(allRecords, importedList);
 
-	const runDate = new Date(end);
-	successReport.runDate = runDate.toLocaleString();
-
-	console.log('==============================');
-	console.log(`RUNTIME: ${runTime}`);
-	console.log('==============================');
-
-	console.log('BAD MATCHES:', successReport.badMatches);
+	console.log(fullData[0].sdsData.data);
 
 	//Export our data to an excel file
-	exportToExcel(allRecords, 'chemical_database.xlsx', successReport);
-
-	//Delete temp files used in scraping
-	// await cleanTempFiles();
+	exportToExcel(fullData, 'chemical_database1.xlsx', dataSummary);
 }
 
-async function openBrowser() {
-	const browser = await puppeteer.launch({ headless: true });
-	const page = await browser.newPage();
+function addImportedData(allRecords, importedList) {
+	//both have same index, since they were built off each other
 
-	//Go to fisher to generate fresh cookies
-	await page.goto('https://www.fishersci.com', {
-		waitUntil: 'domcontentloaded',
-	});
+	for (let i = 0; i < allRecords.length; i++) {
+		const importedData = importedList[i];
+		const record = allRecords[i];
 
-	const cookies = await page.cookies();
-	const cookieString = cookies.map((c) => `${c.name}=${c.value}`).join('; ');
+		record.supplier = importedList[i].importedSupplier;
+		record.quantity = importedList[i].importedQuantity;
+		record.units = importedList[i].importedUnits;
+		record.roomNumber = importedList[i].importedLocation;
+		record.cabinet = importedList[i].importedCabinet;
+		record.recievedDate = importedList[i].importedReceivedDate;
 
-	console.log('==============================');
-	console.log('Browser initialized');
-	console.log('==============================');
-
-	return { browser, page, cookieString };
-}
-
-async function closeBrowser(browser) {
-	await browser.close();
-	console.log('==============================');
-	console.log('Browser Closed');
-	console.log('==============================');
-}
-
-async function cleanTempFiles() {
-	const files = ['./data/temp_pdf/temp.pdf', './data/temp_pdf/temp.txt'];
-
-	for (const file of files) {
-		try {
-			await fsp.access(file);
-			await fsp.unlink(file);
-			console.log(`Deleted ${file}`);
-		} catch (err) {
-			if (err.code === 'ENOENT') {
-				console.log(`File not found, skipped: ${file}`);
-			} else {
-				console.error(`Failed to delete ${file}:`, err);
-			}
-		}
+		console.log(record);
 	}
+	return allRecords;
 }
