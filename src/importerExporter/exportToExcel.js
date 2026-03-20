@@ -53,19 +53,19 @@ function writedataSummary(summarySheet, dataSummary) {
 	row.getCell(1).value = completed;
 	summarySheet.mergeCells(1, 1, 40, 5);
 
-	summarySheet.getCell(1, 7).value = 'FAILED CHEMICAL NAME';
-	summarySheet.getCell(1, 8).value = 'ROW NUMBER IN FULL DATA SHEET';
-	summarySheet.getCell(1, 7).font = { bold: true };
-	summarySheet.getCell(1, 8).font = { bold: true };
+	// summarySheet.getCell(1, 7).value = 'FAILED CHEMICAL NAME';
+	// summarySheet.getCell(1, 8).value = 'ROW NUMBER IN FULL DATA SHEET';
+	// summarySheet.getCell(1, 7).font = { bold: true };
+	// summarySheet.getCell(1, 8).font = { bold: true };
 
-	const badMatches = dataSummary.badMatches;
-	let rowCounter = 2; //start at row 2
-	for (const key in badMatches) {
-		const value = badMatches[key];
-		summarySheet.getCell(rowCounter, 7).value = value;
-		summarySheet.getCell(rowCounter, 8).value = key;
-		rowCounter += 1;
-	}
+	// const badMatches = dataSummary.badMatches;
+	// let rowCounter = 2; //start at row 2
+	// for (const key in badMatches) {
+	// 	const value = badMatches[key];
+	// 	summarySheet.getCell(rowCounter, 7).value = value;
+	// 	summarySheet.getCell(rowCounter, 8).value = key;
+	// 	rowCounter += 1;
+	// }
 
 	summarySheet.getColumn(1).alignment = {
 		wrapText: true,
@@ -910,13 +910,13 @@ function generatedataSummary(dataSummary) {
 	const richRuns = [];
 
 	const successPercent =
-		(dataSummary.passedSDS / dataSummary.totalChemicals) * 100;
+		(dataSummary.passedSDSCount / dataSummary.totalSearches) * 100;
 	const reviewPercent =
-		(dataSummary.reviewSDS / dataSummary.totalChemicals) * 100;
+		(dataSummary.reviewSDSCount / dataSummary.totalSearches) * 100;
 	const failedPercent =
-		(dataSummary.failedSDS / dataSummary.totalChemicals) * 100;
+		(dataSummary.failedSDSCount / dataSummary.totalSearches) * 100;
 	const errorPercent =
-		(dataSummary.errors / dataSummary.totalChemicals) * 100;
+		(dataSummary.errorsEncountered / dataSummary.totalSearches) * 100;
 
 	richRuns.push(
 		{
@@ -937,14 +937,14 @@ function generatedataSummary(dataSummary) {
 		{ text: '\n_______________________________\n' },
 		{ text: 'Total Chemicals ran:\n' },
 		{
-			text: String(dataSummary.totalChemicals),
+			text: String(dataSummary.totalSearches),
 			font: { bold: true, underline: true },
 		},
 		{ text: '\n_______________________________\n' },
 		{ text: 'Successful SDS Sheets' },
 		{ text: '\nTotal: ', font: { bold: true, underline: true } },
 		{
-			text: String(dataSummary.passedSDS),
+			text: String(dataSummary.passedSDSCount),
 			font: { bold: true, underline: true },
 		},
 		{ text: '\nPercentage: ', font: { bold: true, underline: true } },
@@ -954,7 +954,7 @@ function generatedataSummary(dataSummary) {
 		{ text: 'SDS Sheets that need review' },
 		{ text: '\nTotal: ', font: { bold: true, underline: true } },
 		{
-			text: String(dataSummary.reviewSDS),
+			text: String(dataSummary.reviewSDSCount),
 			font: { bold: true, underline: true },
 		},
 		{ text: '\nPercentage: ', font: { bold: true, underline: true } },
@@ -964,7 +964,7 @@ function generatedataSummary(dataSummary) {
 		{ text: 'Failed SDS Sheets' },
 		{ text: '\nTotal: ', font: { bold: true, underline: true } },
 		{
-			text: String(dataSummary.failedSDS),
+			text: String(dataSummary.failedSDSCount),
 			font: { bold: true, underline: true },
 		},
 		{ text: '\nPercentage: ', font: { bold: true, underline: true } },
@@ -974,7 +974,7 @@ function generatedataSummary(dataSummary) {
 		{ text: 'Errors encountered' },
 		{ text: '\nTotal: ', font: { bold: true, underline: true } },
 		{
-			text: String(dataSummary.errors),
+			text: String(dataSummary.errorsEncountered),
 			font: { bold: true, underline: true },
 		},
 		{ text: '\nPercentage: ', font: { bold: true, underline: true } },

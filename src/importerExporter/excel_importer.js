@@ -48,7 +48,7 @@ export async function importExcel(filepath) {
 	// return rows;
 
 	// // FOR TESTING only
-	const tempVar = rows.slice(0, 5);
+	const tempVar = rows.slice(29, 30);
 	return tempVar;
 }
 

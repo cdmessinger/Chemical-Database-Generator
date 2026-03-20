@@ -1,5 +1,5 @@
 import { fsp, path, importExcel, exportToExcel } from '../utils/index.js';
-import { run } from '../../../../SDS-Scraper/core/run.js';
+import { chemicalLookup } from '../../../../SDS-Scraper/core/run.js';
 
 export async function generateChemicalInfo(filePath) {
 	const firstCell = 2; // for tracking cell number in "badMatches" for success report, we multiple index by 7 and add this
@@ -27,7 +27,7 @@ export async function generateChemicalInfo(filePath) {
 	console.log(chemicalList);
 
 	//run SDS-Scraper
-	const { allRecords, dataSummary } = await run(chemicalList);
+	const { allRecords, dataSummary } = await chemicalLookup(chemicalList);
 
 	console.log('Data Summary:', dataSummary);
 
